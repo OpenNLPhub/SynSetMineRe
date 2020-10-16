@@ -199,12 +199,20 @@ class DataItemSet(object):
 
 
 
-
-
-if __name__ == '__main__':
+def test_dataset():
     from pathlib import Path
     pwd = Path.cwd()
     NYT_dir_path = Path.joinpath(pwd,'data','NYT')
     print(NYT_dir_path)
-    train_data = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
-    print(train_data)
+    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
+    print(train_data_NYT)
+    Med_dir_path = Path.joinpath(pwd,'data','PubMed')
+    train_data_MedPub = DataSet(Path.joinpath(Med_dir_path,'train-cold.set'),'PubMed-Train')
+    print(train_data_MedPub)
+
+    Wiki_dir_path = Path.joinpath(pwd,'data','Wiki')
+    train_data_Wiki = DataSet(Path.joinpath(Wiki_dir_path,'train-cold.set'),'Wiki-Train')
+    print(train_data_Wiki)
+
+if __name__ == '__main__':
+    test_dataset()
