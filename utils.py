@@ -6,14 +6,14 @@
 @desc [description]
 '''
 import numpy as np
-from typing import List
+from typing import List,Tuple
 from pathlib import Path
 import numpy as np
 
 pwd = Path.cwd()
 
 def read_embed_info(filepath:Path):
-    """ """
+    """Read word embeding file"""
     with open(filepath, 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
     line_zero = lines[0]
@@ -32,11 +32,13 @@ def read_embed_info(filepath:Path):
     embed_np_matrix = np.array(embed_matrix)
     return word2id, embed_np_matrix
 
-def set_padding(m:List[List[int]],padding = 0)-> np.array:
+
+def set_padding(m:List[List[int]],padding = 0)-> Tuple[np.array,np.array]:
+    """Set Paddings"""
     max_len = 0
     for i in m:
         if max_len < len(i):
-            max_len = m
+            max_len = len(i)
     input_ids = np.array([
         np.concatenate([ x , [padding]*(max_len - (len(x)))]) if len(x)< max_len else x for x in m
     ])
@@ -44,6 +46,9 @@ def set_padding(m:List[List[int]],padding = 0)-> np.array:
     
     return input_ids, mask
 
+
+
+"""-------------------- Test ------------------------"""
 def test_read_embed_info():
     NYT_embed_path =  pwd.joinpath('data','NYT','combined.embed')
     import pdb; pdb.set_trace()

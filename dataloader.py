@@ -13,6 +13,8 @@ import re
 from re import sub
 from typing import Dict, List, Set, Tuple
 import copy
+
+from numpy.core.defchararray import index
 from utils import set_padding, read_embed_info
 import pickle
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
@@ -120,7 +122,7 @@ class Sample_size_repeat_size(DataItemSampler):
                 (pos_word,pos_word,1),
                 (pos_word,neg_word,0)
             ]
-            return ans,1
+            return ans,1,1,1
 
         # random choice subsize
         new_set =  wordset.copy()
@@ -134,8 +136,9 @@ class Sample_size_repeat_size(DataItemSampler):
         neg_word_list = self._negative_sample(wordpool,wordset,negtive_sample_size)
         for neg_word in neg_word_list:
             ans.append((pos_word_set,neg_word,0))
-        
-        return ans,subset_size
+        pos_item_nums = 1
+        neg_item_nums = pos_item_nums * negtive_sample_size
+        return ans,subset_size, pos_item_nums, neg_item_nums
 
 class Sample_vary_size_enumerate(DataItemSampler):
     """A sample method to sample dataitem : For one original word set, enunmerate all subset size and get item
@@ -175,11 +178,19 @@ class DataItemSet(object):
     def _initialize(self,dataset:DataSet)->None:
         dataitem = []
         subset_size_list = []
+        neg_item_num = 0
+        pos_item_num = 0
         for wordset in dataset:
-            subitems,subset_size = self.sampler.sample(self.vocab,wordset,self.negative_sample_size)
+            subitems, subset_size, pos_item_size, neg_item_size = self.sampler.sample(self.vocab,wordset,self.negative_sample_size)
+
+            neg_item_num += neg_item_size
+            pos_item_num += pos_item_size
 
             dataitem.extend(subitems)
             subset_size_list.append(subset_size)
+        
+        self.pos_item_num = pos_item_num
+        self.neg_item_num = neg_item_num
         self.average_set_size = 1.0 * sum(subset_size_list)/len(subset_size_list)
         self.max_set_size = max(subset_size_list)
         self.min_set_size = min(subset_size_list)
@@ -187,15 +198,18 @@ class DataItemSet(object):
 
     def __repr__(self)->None:
         s="-----------Description of DataItemSet--------------\n"
-        return s+'nums of dataitem {} \n the size of biggest set item {} \n the size of smallest set item {} \n the average size of all sets item {}'.format(\
-                len(self.dataitems),self.max_set_size,self.min_set_size,self.average_set_size)
-    
+        return s+'nums of dataitem {} \n the size of biggest set item {} \n the size of smallest set item {} \n the average size of all sets item {:.2f} \n negtive items in dataset:{} \n positive items in dataset:{}'.format(\
+                len(self.dataitems),self.max_set_size,self.min_set_size,self.average_set_size,self.neg_item_num, self.pos_item_num)
+
     def __len__(self) -> int:
         return len(self.dataitems)
     
     def __iter__(self)->None:
         for i in self.dataitems:
             yield i
+        
+    def __getitem__(self,index):
+        return self.dataitems[index]
 
     @classmethod
     def save(cls,path:Path):
@@ -212,7 +226,6 @@ class DataItemSet(object):
         return ans
 
 
-
 class Dataloader(object):
     """Dataloader to get batch size dataitem"""
     def __init__(self, dataitems:DataItemSet, word2id, batch_size:int) -> None:
@@ -224,23 +237,24 @@ class Dataloader(object):
         return self.l
 
     def __iter__(self):
-        ixs = range(0,len(self.data))
-        ixs = random.shuffle(ixs)
+        ixs = list(range(0,len(self.data)))
+        random.shuffle(ixs)
         batch_old_word_set, batch_new_word_set, batch_label = [], [], []
         for index,ix in enumerate(ixs):
             word_set, waiting_word, label = self.data[ix]
-            word_id_set = [ self.word2id(word) for word in word_set]
-            waiting_word_id = self.word2id(waiting_word)
-            new_word_id_set = copy(word_id_set)
+            # import pdb;pdb.set_trace()
+            word_id_set = [ self.word2id[word] for word in word_set]
+            waiting_word_id = self.word2id[waiting_word]
+            new_word_id_set = word_id_set.copy()
             new_word_id_set.append(waiting_word_id)
             
             batch_old_word_set.append(word_id_set)
             batch_new_word_set.append(new_word_id_set)
             batch_label.append(label)
 
-            if (index+1) % self.batch_size == 0 or index == len(self.data-1):
-                batch_old_word_set_, batch_new_word_set_ = set_padding(batch_old_word_set), set_padding(batch_new_word_set)
-                yield batch_old_word_set, batch_new_word_set, batch_label
+            if (index+1) % self.batch_size == 0 or index == len(self.data) - 1:
+                (batch_old_word_set_, old_mask), (batch_new_word_set_,new_mask) = set_padding(batch_old_word_set), set_padding(batch_new_word_set)
+                yield batch_old_word_set_, old_mask, batch_new_word_set_, new_mask, batch_label
                 batch_old_word_set, batch_new_word_set, batch_label = [],[],[]
         
 
@@ -275,8 +289,9 @@ def test_dataitemset():
     negative_sample_size = 10
     dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
     print(dataitem)
-    # for i in dataitem:
-    #     import pdb;pdb.set_trace()
+    for i in dataitem:
+        # import pdb;pdb.set_trace()
+        pass
 
 def test_dataloader():
     from pathlib import Path
@@ -288,12 +303,16 @@ def test_dataloader():
     dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
     batch_size = 32
 
-    _, word2id = read_embed_info(Path.joinpath(NYT_dir_path,'combined.embed'))
+    word2id, _ = read_embed_info(Path.joinpath(NYT_dir_path,'combined.embed'))
     dataloader = Dataloader(dataitems= dataitem, word2id= word2id, batch_size= batch_size)
     
     for item in dataloader:
+        batch_old_word_set, old_mask, batch_new_word_set, new_mask, batch_label = item
         import pdb;pdb.set_trace()
-        
+    
+
 if __name__ == '__main__':
-    # test_dataset()
+    test_dataset()
     test_dataitemset()
+    test_dataloader()
+
