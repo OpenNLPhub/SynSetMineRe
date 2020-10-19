@@ -242,7 +242,6 @@ class Dataloader(object):
         batch_old_word_set, batch_new_word_set, batch_label = [], [], []
         for index,ix in enumerate(ixs):
             word_set, waiting_word, label = self.data[ix]
-            # import pdb;pdb.set_trace()
             word_id_set = [ self.word2id[word] for word in word_set]
             waiting_word_id = self.word2id[waiting_word]
             new_word_id_set = word_id_set.copy()
@@ -289,9 +288,8 @@ def test_dataitemset():
     negative_sample_size = 10
     dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
     print(dataitem)
-    for i in dataitem:
-        # import pdb;pdb.set_trace()
-        pass
+    # for i in dataitem:
+    #     pass
 
 def test_dataloader():
     from pathlib import Path
