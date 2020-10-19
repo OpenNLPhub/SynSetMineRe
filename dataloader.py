@@ -7,13 +7,16 @@
     : Generate DataSet and DataLoader for Classifier
 '''
 
-from os import sendfile
+from pathlib import Path
 import random
 import re
 from re import sub
 from typing import Dict, List, Set, Tuple
-
+import copy
+from utils import set_padding, read_embed_info
+import pickle
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
+
 
 
 
@@ -80,6 +83,8 @@ class DataSet(object):
         return vocab,allsets,max_set_size,min_set_size,sum_set_size/len(allsets)
 
 
+
+
 class DataItemSampler(object):
     """Interface of various sampler"""
     def sample(self,wordpool:Dict, wordset:List[str], negative_sample_size:int)->Tuple[List[Tuple],int]:
@@ -108,14 +113,14 @@ class Sample_size_repeat_size(DataItemSampler):
         if setsize == 1:
             # for only one word set, we generate one positive item and one negative item
             pos_word = wordset[0]
-            neg_word = random.choice(wordpool.keys())
+            neg_word = random.choice(list(wordpool.keys()))
             while neg_word == pos_word:
                 neg_word = random.choice(wordpool.keys())
             ans = [
                 (pos_word,pos_word,1),
                 (pos_word,neg_word,0)
             ]
-            return ans
+            return ans,1
 
         # random choice subsize
         new_set =  wordset.copy()
@@ -138,22 +143,25 @@ class Sample_vary_size_enumerate(DataItemSampler):
     def __init__(self) -> None:
         super(Sample_vary_size_enumerate,self).__init__()
 
-    def sample(wordpool: Dict, wordset: List[str], negative_sample_size:int) -> Tuple[List[Tuple],int]:
+    def sample(self, wordpool: Dict, wordset: List[str], negative_sample_size:int) -> Tuple[List[Tuple],int]:
+        """c"""
         pass
+
+
 
 
 
 
 class DataItemSet(object):
     """DataItemSet  Generate Training and Testing data item"""
-    def __init__(self, dataset:DataSet, sampler:DataItemSampler, negative_sample_size:int, batch_size:int)->None:
+    def __init__(self, dataset:DataSet, sampler:DataItemSampler, negative_sample_size:int)->None:
         self.negative_sample_size = negative_sample_size
         self.vocab = dataset.vocab
         self.sampler = sampler
         self.average_set_size = -1
         self.max_set_size = -1
         self.min_set_size = -1
-        self.dataitems = self._initialize()
+        self.dataitems = self._initialize(dataset)
 
         '''
         item in dataitems is a tuple
@@ -164,18 +172,18 @@ class DataItemSet(object):
         )
         '''
 
-    def _initialize(self)->None:
+    def _initialize(self,dataset:DataSet)->None:
         dataitem = []
         subset_size_list = []
-        for wordset in self.dataset:
+        for wordset in dataset:
             subitems,subset_size = self.sampler.sample(self.vocab,wordset,self.negative_sample_size)
+
             dataitem.extend(subitems)
             subset_size_list.append(subset_size)
-        
-        self.dataitems = dataitem
         self.average_set_size = 1.0 * sum(subset_size_list)/len(subset_size_list)
         self.max_set_size = max(subset_size_list)
         self.min_set_size = min(subset_size_list)
+        return dataitem
 
     def __repr__(self)->None:
         s="-----------Description of DataItemSet--------------\n"
@@ -190,14 +198,58 @@ class DataItemSet(object):
             yield i
 
     @classmethod
-    def save(cls):
-        pass
+    def save(cls,path:Path):
+        """save dataitem"""
+        with open(path, 'wb', encoding='utf-8') as f:
+            pickle.dump(cls,f)
+        # pass
 
     @classmethod
-    def load(cls):
-        pass
+    def load(cls,path:Path):
+        """load dataitem"""
+        with open(path, 'rb', encoding='utf-8') as f:
+            ans = pickle.load(f)
+        return ans
 
 
+
+class Dataloader(object):
+    """Dataloader to get batch size dataitem"""
+    def __init__(self, dataitems:DataItemSet, word2id, batch_size:int) -> None:
+        self.data = dataitems
+        self.l = len(self.data)/batch_size if len(self.data)%batch_size == 0 else len(self.data)/batch_size + 1
+        self.batch_size = batch_size
+        self.word2id = word2id
+    def __len__(self):
+        return self.l
+
+    def __iter__(self):
+        ixs = range(0,len(self.data))
+        ixs = random.shuffle(ixs)
+        batch_old_word_set, batch_new_word_set, batch_label = [], [], []
+        for index,ix in enumerate(ixs):
+            word_set, waiting_word, label = self.data[ix]
+            word_id_set = [ self.word2id(word) for word in word_set]
+            waiting_word_id = self.word2id(waiting_word)
+            new_word_id_set = copy(word_id_set)
+            new_word_id_set.append(waiting_word_id)
+            
+            batch_old_word_set.append(word_id_set)
+            batch_new_word_set.append(new_word_id_set)
+            batch_label.append(label)
+
+            if (index+1) % self.batch_size == 0 or index == len(self.data-1):
+                batch_old_word_set_, batch_new_word_set_ = set_padding(batch_old_word_set), set_padding(batch_new_word_set)
+                yield batch_old_word_set, batch_new_word_set, batch_label
+                batch_old_word_set, batch_new_word_set, batch_label = [],[],[]
+        
+
+
+
+
+
+
+'''------------------------------ Test ---------------------------------- '''
 
 def test_dataset():
     from pathlib import Path
@@ -214,5 +266,34 @@ def test_dataset():
     train_data_Wiki = DataSet(Path.joinpath(Wiki_dir_path,'train-cold.set'),'Wiki-Train')
     print(train_data_Wiki)
 
+def test_dataitemset():
+    from pathlib import Path
+    pwd = Path.cwd()
+    NYT_dir_path = Path.joinpath(pwd,'data','NYT')
+    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
+    sampler = Sample_size_repeat_size()
+    negative_sample_size = 10
+    dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
+    print(dataitem)
+    # for i in dataitem:
+    #     import pdb;pdb.set_trace()
+
+def test_dataloader():
+    from pathlib import Path
+    pwd = Path.cwd()
+    NYT_dir_path = Path.joinpath(pwd,'data','NYT')
+    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
+    sampler = Sample_size_repeat_size()
+    negative_sample_size = 10
+    dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
+    batch_size = 32
+
+    _, word2id = read_embed_info(Path.joinpath(NYT_dir_path,'combined.embed'))
+    dataloader = Dataloader(dataitems= dataitem, word2id= word2id, batch_size= batch_size)
+    
+    for item in dataloader:
+        import pdb;pdb.set_trace()
+        
 if __name__ == '__main__':
-    test_dataset()
+    # test_dataset()
+    test_dataitemset()
