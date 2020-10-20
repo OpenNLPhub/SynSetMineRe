@@ -80,14 +80,13 @@ class Scorer(nn.Module):
             nn.Linear(self.post_trans_hidden_size / 2,1)
         )
     
-    def forward(self,x):
+    def forward(self, input_ids, mask):
         """
         Args:
             x: [input_ids, mask]
             input_ids:  a batch of word sets | batch_size, max_set_size
             mask: notification of padding
         """
-        input_ids, mask = x
 
         y = self.embedding_layer(input_ids)
         # batch_size, max_set_size, embedding_dim 
@@ -96,13 +95,15 @@ class Scorer(nn.Module):
         # batch_size, max_set_szie, embed_trans_hidden_size
 
         #sum
-        mask = mask.unsqueeze(-1).expand(-1,-1,y.shape[-1])
-        y = y*mask
+        mask_ = mask.unsqueeze(-1).expand(-1,-1,y.shape[-1])
+        y = y*mask_
         y = torch.sum(y,dim = 1)
         # batch_size, embed_trans_hidden_size
 
         y = self.post_transformer(y)
         # batch_size, 1
+        y = y.squeeze(-1)
+        # batch_size
         return y
 
 
@@ -111,5 +112,17 @@ class SetinstanceClassifier(nn.Module):
     def __init__(self,scorer:Scorer)->None:
         super(SetinstanceClassifier,self).__init__()
         self.scorer = scorer
-    def forward(self,x):
-        return 0
+
+    def forward(self,word_set, mask, new_word_set, new_mask):
+        """
+        Args:
+            word_set: batch_size * max_word_size
+            mask: word_set mask
+            new_word_set: batch_size * max_word_size
+            new_mask: new word set mask 
+        """
+        old_score = self.scorer(word_set,mask)
+        new_score = self.scorer(new_word_set,mask)
+        # batch_size
+        ans = torch.sigmoid(new_score - old_score)
+        return ans
