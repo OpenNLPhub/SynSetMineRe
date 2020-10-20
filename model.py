@@ -54,7 +54,7 @@ class Embedding_layer(nn.Module):
 
 class Scorer(nn.Module):
     """Module to score word set"""
-    def __init__(self,embedding_layer:Embedding_layer, embed_trans_hidden_size:Tuple, post_trans_hidden_size:Tuple) -> None:
+    def __init__(self,embedding_layer:Embedding_layer, embed_trans_hidden_size:int, post_trans_hidden_size:int, dropout=0.1) -> None:
         """
         Args:
             embedding_layer: word2vec module
@@ -66,13 +66,18 @@ class Scorer(nn.Module):
         self.post_trans_hidden_size = post_trans_hidden_size
         self.embedding_layer = embedding_layer
         self.embedding_transformer = nn.Sequential(
-            nn.Linear(self.embedding_layer.dim,self.embed_trans_hidden_size[0]),
-            nn.Linear(self.embed_trans_hidden_size[0],self.embed_trans_hidden_size[1])
+            nn.Linear(self.embedding_layer.dim,self.embedding_layer.dim, bias = False),
+            nn.ReLU(),
+            nn.Linear(self.embedding_layer.dim,self.embed_trans_hidden_size),
+            nn.ReLU()
         )
         self.post_transformer = nn.Sequential(
-            nn.Linear(self.embed_trans_hidden_size[1],self.post_trans_hidden_size[0]),
-            nn.Linear(self.post_trans_hidden_size[0],self.post_trans_hidden_size[1]),
-            nn.Linear(self.post_trans_hidden_size[1],self.post_trans_hidden_size[2])
+            nn.Linear(self.embed_trans_hidden_size,self.post_trans_hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.post_trans_hidden_size,self.post_trans_hidden_size / 2),
+            nn.Dropout(dropout),
+            nn.ReLU(),
+            nn.Linear(self.post_trans_hidden_size / 2,1)
         )
     
     def forward(self,x):
@@ -88,23 +93,23 @@ class Scorer(nn.Module):
         # batch_size, max_set_size, embedding_dim 
 
         y = self.embedding_transformer(y)
-        # batch_size, max_set_szie, embed_trans_hidden_size[1]
+        # batch_size, max_set_szie, embed_trans_hidden_size
 
         #sum
         mask = mask.unsqueeze(-1).expand(-1,-1,y.shape[-1])
         y = y*mask
         y = torch.sum(y,dim = 1)
-        # batch_size, embed_trans_hidden_size[1]
+        # batch_size, embed_trans_hidden_size
 
         y = self.post_transformer(y)
-
+        # batch_size, 1
         return y
+
 
 class SetinstanceClassifier(nn.Module):
     """Classifier to predict waiting word is or not in input set"""
     def __init__(self,scorer:Scorer)->None:
         super(SetinstanceClassifier,self).__init__()
         self.scorer = scorer
-        
     def forward(self,x):
         return 0
