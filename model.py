@@ -51,6 +51,8 @@ class Embedding_layer(nn.Module):
         for i in self.embedding.parameters():
             i.requires_grad = True
 
+# def getScorer():
+
 
 class Scorer(nn.Module):
     """Module to score word set"""
