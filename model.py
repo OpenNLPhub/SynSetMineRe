@@ -79,7 +79,7 @@ class Scorer(nn.Module):
             nn.Linear(self.post_trans_hidden_size,self.post_trans_hidden_size / 2),
             nn.Dropout(dropout),
             nn.ReLU(),
-            nn.Linear(self.post_trans_hidden_size / 2,1)
+            nn.Linear(self.post_trans_hidden_size / 2, 2)
         )
     
     def forward(self, input_ids, mask):
@@ -103,9 +103,9 @@ class Scorer(nn.Module):
         # batch_size, embed_trans_hidden_size
 
         y = self.post_transformer(y)
-        # batch_size, 1
-        y = y.squeeze(-1)
-        # batch_size
+        # batch_size, 2
+        # y = y.squeeze(-1)
+        y = torch.softmax(y,dim=1)
         return y
 
 

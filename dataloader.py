@@ -11,10 +11,11 @@ from pathlib import Path
 import random
 import re
 from re import sub
-from typing import Dict, List, Set, Tuple
-import copy
+from typing import Dict, List, Set, Tuple, Any
+from copy import copy
 
 from numpy.core.defchararray import index
+from torch.utils import data
 from utils import set_padding, read_embed_info
 import pickle
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
@@ -253,9 +254,22 @@ class Dataloader(object):
 
             if (index+1) % self.batch_size == 0 or index == len(self.data) - 1:
                 (batch_old_word_set_, old_mask), (batch_new_word_set_,new_mask) = set_padding(batch_old_word_set), set_padding(batch_new_word_set)
+                # batch_label = self._trans_label(batch_label)
                 yield batch_old_word_set_, old_mask, batch_new_word_set_, new_mask, batch_label
                 batch_old_word_set, batch_new_word_set, batch_label = [],[],[]
+    
+    
+    def split(self, q:float=0.2) -> Tuple[Any]:
+        dataitem = copy(self.data)
+        random.shuffle(dataitem)
+        sub_l = int(self.l * q)
+        return [
+                Dataloader(dataitem[:sub_l], self.word2id, self.batch_size),
+                Dataloader(dataitem[sub_l:], self.word2id, self.batch_size)
+            ]
         
+
+
 
 
 
