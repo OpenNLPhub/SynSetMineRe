@@ -125,7 +125,7 @@ def rand_index(pred_cluster: Dict[Any], target_cluster: Dict[Any]) -> float:
     """
     pred_cluster_size = len(pred_cluster)
     target_cluster_size = len(target_cluster)
-    contingency_table = np.zeros((pred_cluster,target_cluster))
+    contingency_table = np.zeros((pred_cluster_size,target_cluster_size))
     
     for i, p_cluster in enumerate(pred_cluster):
         for j, t_cluster in enumerate(target_cluster):
@@ -140,6 +140,20 @@ def rand_index(pred_cluster: Dict[Any], target_cluster: Dict[Any]) -> float:
 
 def adjusted_rand_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]):
     """Docstring
+    Using Contingency Matrix to calculate ARI
+    Continggency Matrix
+    --------------------------------
+    XY  | Y_1  Y_2  ...  Y_s  | sums
+    --------------------------------
+    X_1 | n_11 n_12 ...  n_1s | a_1
+    X_2 | n_21 n_22 ...  n_2s | a_2
+    ... | ...  ...  ...  ...  | ...
+    X_r | n_r1 n_r2 ...  n_rs | a_r
+    sum | b_1  b_2  ...  b_s  |
+    --------------------------------
+    f(x) = comb(x,2)
+    ARI = [ sum f(n_ij) - sum f(a_ij) * sum f(b_ij) / f(n) ] /
+            [0.5 * [ sum f(a_ij) + sum f(b_ij)] - sum f(a_ij) * sum f(b_ij) / f(n)]
     """
     pred_cluster_size = len(set(pred_cluster.values()))
     target_cluster_size = len(set(target_cluster.values()))
@@ -151,8 +165,16 @@ def adjusted_rand_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]):
     pred_sum = np.sum(contingency_table, axis=1)
     target_sum = np.sum(contingency_table, aixs=0)
     
+    pred_comb_sum = 0
+    for i in np.npiter(pred_sum):
+        pred_comb_sum += comb(i,2)
+    target_comb_sum = 0
+    for i in np.npiter(target_sum):
+        target_comb_sum += comb(i,2)
+    tmp = pred_comb_sum * target_comb_sum / s
+    ARI = (ij - tmp) / (0.5*(pred_comb_sum+target_comb_sum) - tmp)
     
-    pass
+    return ARI
 
 
 
