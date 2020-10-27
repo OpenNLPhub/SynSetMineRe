@@ -154,6 +154,12 @@ def adjusted_rand_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]):
     f(x) = comb(x,2)
     ARI = [ sum f(n_ij) - sum f(a_ij) * sum f(b_ij) / f(n) ] /
             [0.5 * [ sum f(a_ij) + sum f(b_ij)] - sum f(a_ij) * sum f(b_ij) / f(n)]
+    
+    Args:
+        pred_cluster: Dict cluster_id: List[element] （cluster_id from 0 to max_size）| predicted clusters 
+        target_cluster: Dict cluster_id: List[element] （cluster_id from 0 to max_size) | target clusters  
+    Return:
+        ARI (float)
     """
     pred_cluster_size = len(set(pred_cluster.values()))
     target_cluster_size = len(set(target_cluster.values()))
