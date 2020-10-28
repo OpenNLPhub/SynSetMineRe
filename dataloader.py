@@ -28,7 +28,7 @@ class DataSet(object):
     def __init__(self,file_path:Path,name:str = "DataSet",word_emb_select:Optional[str] = None):
         self.name = name
         self.vocab,self.raw_sets,self.max_set_size,self.min_set_size,self.average_set_size = self._initilize(file_path=str(file_path))
-        
+        word_emb_file = None
         if word_emb_select == None:
             word_emb_file = file_path.joinpath('combined.embed')
         elif word_emb_select == 'fastText-subword':

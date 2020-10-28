@@ -31,6 +31,15 @@ class Embedding_layer(nn.Module):
         layer = cls(vocab_size,embedding_dim)
         layer.embedding = nn.Embedding.from_pretrained(word2vec, padding_idx=0).float()
         return layer
+    
+    @classmethod
+    def from_pretrained(cls,embedding):
+        """Polymorphism Contructor """
+        word2vec = torch.from_numpy(embedding)
+        vocab_size, embedding_dim = word2vec.shape
+        layer = cls(vocab_size,embedding_dim)
+        layer.embedding = nn.Embedding.from_pretrained(word2vec, padding_idx=0).float()
+        return layer
 
     def forward(self,x):
         """

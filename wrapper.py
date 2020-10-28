@@ -9,7 +9,7 @@ from datetime import datetime
 from utils import set_padding
 import torch
 from torch import optim
-from typing import Any, Dict, None, Optional, Sequence
+from typing import Any, Callable, Dict, None, Optional, Sequence
 import numpy as np
 from torch.utils import data
 from model import Embedding_layer,Scorer,SetinstanceClassifier
@@ -20,20 +20,20 @@ from tqdm import tqdm
 from copy import deepcopy
 from evaluate import EvalUnit,binary_confusion_matrix_evaluate
 
-class SynMineModelWrapper(object):
+class ModelWrapper(object):
     """Class to wrapper training and testing of deeplearning model
     
     """
     def __init__(self, modelconfig:Dict, trainingconfig:Dict) -> None:
-        super(SynMineModelWrapper,self).__init__()
+        super(ModelWrapper,self).__init__()
         self.device = torch.device("cuda:1") if torch.cuda.is_available() else torch.device('cpu')
         
-        embedding_layer = Embedding_layer.load(modelconfig['word2vec_path'])
-        embedding_layer.freeze_parameters()
-        hidden_size = modelconfig['hidden_size']
-        assert len(hidden_size) == 2
-        scorer = Scorer(embedding_layer,hidden_size[0],hidden_size[1])
-        self.model = SetinstanceClassifier(scorer)
+        # embedding_layer = Embedding_layer.load(modelconfig['word2vec_path'])
+        # embedding_layer.freeze_parameters()
+        # hidden_size = modelconfig['hidden_size']
+        # assert len(hidden_size) == 2
+        # scorer = Scorer(embedding_layer,hidden_size[0],hidden_size[1])
+        self.model = modelconfig['model']
         self.loss_fn = modelconfig['loss_fn']
         self.start_epoches = 0
         self.threshold = trainingconfig['threshold']
@@ -222,8 +222,14 @@ class SynMineModelWrapper(object):
         }
         torch.save(d, filepath)
     
-    def cluster_predict(self, dataset:DataSet, word2id:Dict) -> Sequence[Any]:
+    def cluster_predict(self, dataset:DataSet, word2id:Dict, outputfile:Optional[str]) -> Sequence[Any]:
         """Using Model to cluster wordset
+        Args:
+            dataset: it's self defined class, in DataSet, we use vocab to get all words and true cluster result
+            word2id: it is got from embedding file, translate word to embedding index
+            outputfile: outputfile path
+        Returns:
+            List of word sets
         """
         self.best_model.eval()
         vocab = dataset.vocab
@@ -253,8 +259,33 @@ class SynMineModelWrapper(object):
         id2word = { j:i for i,j in word2id.items()}
         F = lambda x:[ id2word[i] for i in x]
         pred_word_sets = [ F(wordset) for wordset in wordset_list]
-
-        #metrics
-
-
         
+        if outputfile is not None:
+            with open(outputfile, 'w', encoding='utf-8') as f:
+                for pred_word_set in pred_word_sets:
+                    for word in pred_word_set:
+                        f.write(word+' ')
+                    f.write('\n')
+
+        return pred_word_sets
+
+    def evaluate(self, dataset:DataSet, pred_word_sets:Sequence[Any], function_list:Sequence[Callable[...,float]])->Sequence[Any]:
+        """ Use Evaluating Function to Evaluate the final result
+        Args:
+            dataset: it's self defined class, we use vocab attribute to get true cluster result
+            pred_word_set: the output of cluster_predict method | List of word sets
+            function_list: the list of evaluating function which have two input pred_cluster and target_cluster
+        """
+        #trans datatype 
+        clusters = set(dataset.vocab.values())
+        cluster2id = {cluster:idx for idx,cluster in enumerate(clusters)}
+        target_cluster = {key:cluster2id[value] for key,value in dataset.vocab.items()}
+        pred_cluster = {}
+        for idx,pred_word_set  in enumerate(pred_word_sets):
+            for word in pred_word_set:
+                pred_cluster[word] = idx
+        
+        ans = []
+        for func in function_list:
+            ans.append(func(pred_cluster = pred_cluster,target_cluster = target_cluster))
+        return ans
