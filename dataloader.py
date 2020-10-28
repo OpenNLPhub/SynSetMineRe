@@ -11,12 +11,12 @@ from pathlib import Path
 import random
 import re
 from re import sub
-from typing import Dict, List, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Tuple, Any
 from copy import copy
-
+import numpy as np
 from numpy.core.defchararray import index
 from torch.utils import data
-from utils import set_padding, read_embed_info
+from utils import set_padding
 import pickle
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
 
@@ -25,11 +25,18 @@ pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
 
 class DataSet(object):
     """class: description of Raw Data"""
-    def __init__(self,file_path:str,name:str):
+    def __init__(self,file_path:Path,name:str = "DataSet",word_emb_select:Optional[str] = None):
         self.name = name
-
-        self.vocab,self.raw_sets,self.max_set_size,self.min_set_size,self.average_set_size = self._initilize(file_path=file_path)
+        self.vocab,self.raw_sets,self.max_set_size,self.min_set_size,self.average_set_size = self._initilize(file_path=str(file_path))
         
+        if word_emb_select == None:
+            word_emb_file = file_path.joinpath('combined.embed')
+        elif word_emb_select == 'fastText-subword':
+            word_emb_file = file_path.joinpath('combined.fastText-with-subword.embed')
+        elif word_emb_select == 'fastText-no-subword':
+            word_emb_file = file_path.joinpath('combined.fastText-no-subword.embed')
+        
+        self.word2id, self.embedding_vec = self.read_embed_info(str(word_emb_file))
       
     def __iter__(self):
         for word_set in self.raw_sets:
@@ -84,7 +91,27 @@ class DataSet(object):
             allsets.append(item)
 
         return vocab,allsets,max_set_size,min_set_size,sum_set_size/len(allsets)
-
+    
+    def read_embed_info(self,filepath:str):
+        """Read word embeding file"""
+        with open(filepath, 'r', encoding = 'utf-8') as f:
+            lines = f.readlines()
+        line_zero = lines[0]
+        vocab_size, dim_size = [ int(i) for i in line_zero.strip().split(' ')]
+        word2id = {}
+        word2id['PAD'] = 0
+        word2id['UNK'] = 1
+        embed_matrix = [[0]*dim_size,[0]*dim_size]
+        for line in lines[1:]:
+            t = line.strip().split(' ')
+            word, _ = t[0].split('||')
+            word2id[word] = len(word2id)
+            nums = [ eval(i) for i in t[1:]]
+            embed_matrix.append(nums)
+        
+        embed_np_matrix = np.array(embed_matrix)
+        return word2id, embed_np_matrix 
+    
 
 
 
@@ -152,13 +179,15 @@ class Sample_vary_size_enumerate(DataItemSampler):
         pass
 
 
-
-
-
+def select_sampler(name:str)-> DataItemSampler:
+    if name == "sample_vary_size_enumerate":
+        return Sample_vary_size_enumerate()
+    else:
+        return Sample_size_repeat_size()
 
 class DataItemSet(object):
     """DataItemSet  Generate Training and Testing data item"""
-    def __init__(self, dataset:DataSet, sampler:DataItemSampler, negative_sample_size:int)->None:
+    def __init__(self, dataset:DataSet, sampler:DataItemSampler, negative_sample_size:int = 10)->None:
         self.negative_sample_size = negative_sample_size
         self.vocab = dataset.vocab
         self.sampler = sampler
@@ -315,7 +344,7 @@ def test_dataloader():
     dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
     batch_size = 32
 
-    word2id, _ = read_embed_info(Path.joinpath(NYT_dir_path,'combined.embed'))
+    word2id = train_data_NYT.word2id
     dataloader = Dataloader(dataitems= dataitem, word2id= word2id, batch_size= batch_size)
     
     for item in dataloader:
