@@ -5,10 +5,11 @@
  * @desc 
 '''
 import itertools
+from re import L
 from typing import Any, Dict, Optional, Sequence, Tuple, overload
+from numpy.lib.scimath import sqrt
+import sklearn
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics.classification import recall_score
-from torch.backends.mkldnn import set_flags
 import numpy as np
 from scipy.special import comb
 
@@ -83,26 +84,43 @@ def binary_confusion_matrix_evaluate(y_true:Sequence[Any], y_pred:Sequence[Any])
 
 
 """ ---------------- cluster Metrics ---------------- """
-def rand_index_plus(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> EvalUnit:
-    """Calcultae the rand index and Get detailed result
-    RI = Accuracy = (TP+TN)/(TP,TN,FP,FN)
+
+"""
+I reimplemet adjusted_rand_index, fowlkes_mallows_scores.
+In order to understand algoritmn
+But In reality, We can call related API directly from sklearn.
+"""
+''' helper function'''
+def helper_trans_to_element2clusterid(cluster:Dict[Any]) -> Dict[Any]:
+    ele2cluster = {}
+    for key,value in cluster.items():
+        if key not in ele2cluster:
+            ele2cluster[key] = []
+        ele2cluster[key].append(value)
+    return ele2cluster
+
+''' '''
+def cluster_confusion_matrix(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> EvalUnit:
+    """ simulate confusion matrix 
     Args:
-        pred_cluster: Dict element:cluster_id （cluster_id from 0 to max_size）| predicted clusters 
-        target_cluster: Dict element:clutser_id （cluster_id from 0 to max_size) | target clusters  
+        pred_cluster: Dict element: cluster_id （cluster_id from 0 to max_size）| predicted clusters 
+        target_cluster: Dict element:cluster_id （cluster_id from 0 to max_size) | target clusters  
     Returns:
         In order to return detailed data, It will return a EvalUnit, 
-        call accuracy to get RI.
     """
+
+    
     pred_elements = list(pred_cluster.keys())
     target_elements = list(target_cluster.keys())
+
     it = itertools.product(pred_elements,target_elements)
     tp,fp,tn,fn = 0,0,0,0
     for x,y in it:
         if x != y:#other word
-            x_cluster = pred_cluster[x]
-            x_cluster_ = target_cluster[x]
-            y_cluster = pred_cluster[y]
-            y_cluster_ = target_cluster[y]
+            x_cluster = pred_elements[x]
+            x_cluster_ = target_elements[x]
+            y_cluster = pred_elements[y]
+            y_cluster_ = target_elements[y]
 
             if x_cluster == y_cluster and x_cluster_ == y_cluster_:
                 tp += 1
@@ -114,21 +132,34 @@ def rand_index_plus(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> EvalUni
                 fn +=1
     return EvalUnit(tp,tn,fp,fn,'rand_index')
 
+def get_rand_index(unit:EvalUnit) -> float:
+    return unit.precision
+
+def get_fowlkes_mallows_score(unit:EvalUnit) -> float:
+    FMI = unit.tp / sqrt((unit.tp + unit.fp) * (unit.tp+ unit.fn))
+
+def fowlkes_mallows_score(pred_cluster: Dict[Any], target_cluster: Dict[Any]) -> float:
+    unit = cluster_confusion_matrix(pred_cluster,target_cluster)
+    return get_fowlkes_mallows_score(unit)
+
 
 def rand_index(pred_cluster: Dict[Any], target_cluster: Dict[Any]) -> float:
     """Use contingency_table to get RI directly
+    RI = Accuracy = (TP+TN)/(TP,TN,FP,FN)
     Args:
-        pred_cluster: Dict cluster_id: List[element] （cluster_id from 0 to max_size）| predicted clusters 
-        target_cluster: Dict cluster_id: List[element] （cluster_id from 0 to max_size) | target clusters  
+        pred_cluster: Dict element:cluster_id （cluster_id from 0 to max_size）| predicted clusters 
+        target_cluster: Dict element:cluster_id （cluster_id from 0 to max_size) | target clusters  
     Return:
         RI (float)
     """
-    pred_cluster_size = len(pred_cluster)
-    target_cluster_size = len(target_cluster)
+    pred_cluster_ = helper_trans_to_element2clusterid(pred_cluster)
+    target_cluster_ = helper_trans_to_element2clusterid(target_cluster)
+    pred_cluster_size = len(pred_cluster_)
+    target_cluster_size = len(target_cluster_)
     contingency_table = np.zeros((pred_cluster_size,target_cluster_size))
     
-    for i, p_cluster in enumerate(pred_cluster):
-        for j, t_cluster in enumerate(target_cluster):
+    for i, p_cluster in enumerate(pred_cluster_):
+        for j, t_cluster in enumerate(target_cluster_):
             #find common element
             l = [*p_cluster,*t_cluster]
             contingency_table[i][j] = len(l) - len(set(l))
@@ -161,9 +192,18 @@ def adjusted_rand_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]):
     Return:
         ARI (float)
     """
-    pred_cluster_size = len(set(pred_cluster.values()))
-    target_cluster_size = len(set(target_cluster.values()))
+    pred_cluster_ = helper_trans_to_element2clusterid(pred_cluster)
+    target_cluster_ = helper_trans_to_element2clusterid(target_cluster)
+    pred_cluster_size = len(pred_cluster_)
+    target_cluster_size = len(target_cluster_)
     contingency_table = np.zeros((pred_cluster_size, target_cluster_size))
+
+    for i, p_cluster in enumerate(pred_cluster_):
+        for j, t_cluster in enumerate(target_cluster_):
+            #find common element
+            l = [*p_cluster,*t_cluster]
+            contingency_table[i][j] = len(l) - len(set(l))
+
     s = comb(np.sum(contingency_table), 2)
     ij = 0
     for i in np.npiter(contingency_table):
@@ -179,8 +219,39 @@ def adjusted_rand_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]):
         target_comb_sum += comb(i,2)
     tmp = pred_comb_sum * target_comb_sum / s
     ARI = (ij - tmp) / (0.5*(pred_comb_sum+target_comb_sum) - tmp)
-    
+
     return ARI
+
+
+
+"""
+Below function is inference of sklearn
+I changed the input data type slightly
+"""
+
+
+'''helper function'''
+def helper_trans_to_labelsequence(cluster:Dict[Any])->Sequence[Any]:
+    keys = cluster.keys()
+    label_sequence = []
+    for element in keys:
+        label_sequence.append(cluster[element])
+    return label_sequence
+
+def metrics_adjusted_randn_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> float:
+    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
+    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
+    return sklearn.metrics.adjusted_rand_index(label_true = target_sequence, label_pred = pred_sequence)
+
+def metrics_normalized_mutual_info_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> float:
+    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
+    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
+    return sklearn.metrics.normalized_mutual_info_score(label_true = target_sequence, label_pred = pred_sequence)
+
+def metrics_fowlkes_mallows_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) ->float:
+    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
+    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
+    return sklearn.metrics.fowlkes_mallows_score(label_true = target_sequence, label_pred = pred_sequence)
 
 
 
