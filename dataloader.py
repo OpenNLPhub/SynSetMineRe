@@ -21,22 +21,66 @@ import pickle
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
 
 
+class DataSetDir(object):
+    """ class: DataSet Dir including training data and dev data """
+    def __init__(self,dir_file_path:Path,dir_structure:Optional[Dict] == None, word_emb_select:Optional[str] = None):
+        self.path = dir_file_path
+        self.name = dir_file_path.name
+        self.train_file_name = 'train-cold.set'
+        self.test_file_name = 'test.set'
+        if not dir_structure:
+            self.train_file_name = dir_structure['train']
+            self.test_file_name = dir_structure['test']
+        
 
-
-class DataSet(object):
-    """class: description of Raw Data"""
-    def __init__(self,file_path:Path,name:str = "DataSet",word_emb_select:Optional[str] = None):
-        self.name = name
-        self.vocab,self.raw_sets,self.max_set_size,self.min_set_size,self.average_set_size = self._initilize(file_path=str(file_path))
         word_emb_file = None
         if word_emb_select == None:
-            word_emb_file = file_path.joinpath('combined.embed')
+            word_emb_file = dir_file_path.joinpath('combined.embed')
         elif word_emb_select == 'fastText-subword':
-            word_emb_file = file_path.joinpath('combined.fastText-with-subword.embed')
+            word_emb_file = dir_file_path.joinpath('combined.fastText-with-subword.embed')
         elif word_emb_select == 'fastText-no-subword':
-            word_emb_file = file_path.joinpath('combined.fastText-no-subword.embed')
+            word_emb_file = dir_file_path.joinpath('combined.fastText-no-subword.embed')
         
-        self.word2id, self.embedding_vec = self.read_embed_info(str(word_emb_file))
+        self.word2id, self.embedding_vec = self._read_embed_info(str(word_emb_file))
+        
+        self.train_dataset = DataSet(
+                                dir_file_path.joinpath(self.train_file_name),
+                                self.name+"_training",
+                                self.word2id,
+                                self.embedding_vec,
+                            )
+        self.test_dataset = DataSet(
+                                dir_file_path.joinpath(self.test_file_name),
+                                self.name+"_testing",
+                                self.word2id,
+                                self.embedding_vec,
+                            )
+
+    def _read_embed_info(self,filepath:str):
+        """Read word embeding file"""
+        with open(filepath, 'r', encoding = 'utf-8') as f:
+            lines = f.readlines()
+        line_zero = lines[0]
+        vocab_size, dim_size = [ int(i) for i in line_zero.strip().split(' ')]
+        word2id = {}
+        word2id['PAD'] = 0
+        word2id['UNK'] = 1
+        embed_matrix = [[0]*dim_size,[0]*dim_size]
+        for line in lines[1:]:
+            t = line.strip().split(' ')
+            word, _ = t[0].split('||')
+            word2id[word] = len(word2id)
+            nums = [ eval(i) for i in t[1:]]
+            embed_matrix.append(nums)
+        
+        embed_np_matrix = np.array(embed_matrix)
+        return word2id, embed_np_matrix 
+    
+class DataSet(object):
+    """class: description of Raw Data"""
+    def __init__(self,file_path:Path,name:str):
+        self.name = name
+        self.vocab,self.raw_sets,self.max_set_size,self.min_set_size,self.average_set_size = self._initilize(file_path=str(file_path))
       
     def __iter__(self):
         for word_set in self.raw_sets:
@@ -46,8 +90,7 @@ class DataSet(object):
         s="-------------Description of Dataset-------------\n"
         return s+'Raw DataSet Name {} \n vocab size {} \n num of sets {} \n the size of biggest set {} \n the size of smallest set {} \n the average size of all sets {}'.format(\
                 self.name,len(self.vocab),len(self.raw_sets),self.max_set_size,self.min_set_size,self.average_set_size)
-
-        
+  
     def _initilize(self,file_path:str)->None:
         '''Initialize Dataset from raw string
             @Param file_path:Raw Data file path
@@ -92,29 +135,6 @@ class DataSet(object):
 
         return vocab,allsets,max_set_size,min_set_size,sum_set_size/len(allsets)
     
-    def read_embed_info(self,filepath:str):
-        """Read word embeding file"""
-        with open(filepath, 'r', encoding = 'utf-8') as f:
-            lines = f.readlines()
-        line_zero = lines[0]
-        vocab_size, dim_size = [ int(i) for i in line_zero.strip().split(' ')]
-        word2id = {}
-        word2id['PAD'] = 0
-        word2id['UNK'] = 1
-        embed_matrix = [[0]*dim_size,[0]*dim_size]
-        for line in lines[1:]:
-            t = line.strip().split(' ')
-            word, _ = t[0].split('||')
-            word2id[word] = len(word2id)
-            nums = [ eval(i) for i in t[1:]]
-            embed_matrix.append(nums)
-        
-        embed_np_matrix = np.array(embed_matrix)
-        return word2id, embed_np_matrix 
-    
-
-
-
 class DataItemSampler(object):
     """Interface of various sampler"""
     def sample(self,wordpool:Dict, wordset:List[str], negative_sample_size:int)->Tuple[List[Tuple],int]:
