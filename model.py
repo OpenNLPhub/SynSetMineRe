@@ -6,6 +6,7 @@
 @desc [description]
 '''
 
+from os import name
 from typing import Tuple
 import torch
 import torch.nn as nn
@@ -120,10 +121,11 @@ class Scorer(nn.Module):
 
 class SetinstanceClassifier(nn.Module):
     """Classifier to predict waiting word is or not in input set"""
-    def __init__(self,scorer:Scorer)->None:
+    def __init__(self,scorer:Scorer, name:str, version:str)->None:
         super(SetinstanceClassifier,self).__init__()
         self.scorer = scorer
-
+        self.name = name
+        self.version = version
     def forward(self,word_set, mask, new_word_set, new_mask):
         """
         Args:
