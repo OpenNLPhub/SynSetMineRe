@@ -8,15 +8,14 @@
 from datetime import datetime
 from utils import set_padding
 import torch
+import torch.nn as nn
 from torch import optim
 from typing import Any, Callable, Dict, None, Optional, Sequence
 import numpy as np
 from torch.utils import data
-from model import Embedding_layer,Scorer,SetinstanceClassifier
 from dataloader import DataSet, Dataloader, test_dataloader
 from pathlib import Path
 from log import logger
-from tqdm import tqdm
 from copy import deepcopy
 from evaluate import EvalUnit,binary_confusion_matrix_evaluate
 
@@ -24,7 +23,7 @@ class ModelWrapper(object):
     """Class to wrapper training and testing of deeplearning model
     
     """
-    def __init__(self, modelconfig:Dict, trainingconfig:Dict) -> None:
+    def __init__(self, model:nn.Module, trainingconfig:Dict) -> None:
         super(ModelWrapper,self).__init__()
         self.device = torch.device("cuda:1") if torch.cuda.is_available() else torch.device('cpu')
         
@@ -33,8 +32,8 @@ class ModelWrapper(object):
         # hidden_size = modelconfig['hidden_size']
         # assert len(hidden_size) == 2
         # scorer = Scorer(embedding_layer,hidden_size[0],hidden_size[1])
-        self.model = modelconfig['model']
-        self.loss_fn = modelconfig['loss_fn']
+        self.model = model
+        self.loss_fn = trainingconfig['loss_fn']
         self.start_epoches = 0
         self.threshold = trainingconfig['threshold']
         self.epoches = trainingconfig['epoch']
@@ -48,7 +47,7 @@ class ModelWrapper(object):
         self.checkpoint_dir =trainingconfig['checkpoint_dir']
 
         self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.lr, amsgrad=True)
-
+        # optimizer is default 
 
     def train(self, train_dataloader:Dataloader, dev_dataloader:Optional[Dataloader] = None) -> None:
         """Implementation to Batch Train the model
@@ -186,6 +185,9 @@ class ModelWrapper(object):
         if file_name == None:
             import os
             flist = os.listdir(dir_path)
+            if not flist:
+                logger.info('No checkpoint file')
+                raise ValueError()
             filepath = Path.joinpath(dir_path,max(flist))
         else:
             filepath = Path.joinpath(dir_path,file_name)
@@ -211,7 +213,7 @@ class ModelWrapper(object):
         """
         dir_path = Path(self.checkpoint_dir)
         now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-        filepath = Path.joinpath(dir_path,now+'_checkpoint.pth.tar')
+        filepath = Path.joinpath(dir_path,self.model.name+'_'+self.model.version+'_'+now+'_checkpoint.pth.tar')
         d = {
             'epoch':self.start_epoches,
             'state_dict' : self.model.state_dict(),
