@@ -5,7 +5,7 @@
  * @desc 
 '''
 import itertools
-from typing import Any, Dict, Optional, Sequence, Tuple, overload
+from typing import Any, Dict, Optional, Sequence, Tuple
 from numpy.lib.scimath import sqrt
 import sklearn
 from sklearn.metrics import confusion_matrix
@@ -31,7 +31,6 @@ class EvalUnit(object):
         self.fn = fn
         self.tn = tn
 
-    @overload
     def __repr__(self):
         desc = '--------- Desc EvalUnit {}---------'.format(self.name)
         desc += 'True Positive:{} \nTrue Negative:{} \nFalse Positive:{} \nFalse Negative:{} \n'.format(
@@ -42,7 +41,6 @@ class EvalUnit(object):
                 )
         return desc
 
-    @overload
     def __add__(self,other) -> "EvalUnit":
         return EvalUnit(
             self.tn + other.tn,
@@ -51,7 +49,6 @@ class EvalUnit(object):
             self.tp + other.tp,
             )
         
-    @overload
     def __iadd__(self,other) -> "EvalUnit":
         self.tn += other.tn
         self.fp += other.fp
