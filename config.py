@@ -45,6 +45,8 @@ DataConfig = {
 
 #default modelconfig
 ModelConfig = {
+    'name' : 'SynSetMine',
+    'version' : 'v1.0.0',
     'embed_trans_hidden_size' : 250,
     'post_trans_hidden_size' : 500,
     'dropout' : 0.1
