@@ -26,13 +26,14 @@ class DataSetDir(object):
     def __init__(self,dir_file_path:Path,dir_structure:Optional[Dict] = None, word_emb_select:Optional[str] = None):
         self.path = dir_file_path
         self.name = dir_file_path.name
-        self.train_file_name = 'train-cold.set'
+        self.train_file_name = 'train.set'
         self.test_file_name = 'test.set'
+        self.dev_file_name = 'dev.set'
         if dir_structure:
             self.train_file_name = dir_structure['train']
             self.test_file_name = dir_structure['test']
+            self.dev_file_name = dir_structure['dev']
         
-
         word_emb_file = None
         if word_emb_select == None:
             word_emb_file = dir_file_path.joinpath('combined.embed')
@@ -51,13 +52,16 @@ class DataSetDir(object):
                                 dir_file_path.joinpath(self.test_file_name),
                                 self.name+"_testing"
                             )
-
+        self.dev_dataset = DataSet(
+                                dir_file_path.joinpath(self.dev_file_name),
+                                self.name+"_dev"
+                            )
     def _read_embed_info(self,filepath:str):
         """Read word embeding file"""
         with open(filepath, 'r', encoding = 'utf-8') as f:
             lines = f.readlines()
         line_zero = lines[0]
-        vocab_size, dim_size = [ int(i) for i in line_zero.strip().split(' ')]
+        vocab_size, dim_size = [int(i) for i in line_zero.strip().split(' ')]
         word2id = {}
         word2id['PAD'] = 0
         word2id['UNK'] = 1
@@ -131,6 +135,7 @@ class DataSet(object):
 
         return vocab,allsets,max_set_size,min_set_size,sum_set_size/len(allsets)
     
+
 class DataItemSampler(object):
     """Interface of various sampler"""
     def sample(self,wordpool:Dict, wordset:List[str], negative_sample_size:int)->Tuple[List[Tuple],int]:
@@ -228,6 +233,7 @@ class DataItemSet(object):
         subset_size_list = []
         neg_item_num = 0
         pos_item_num = 0
+
         for wordset in dataset:
             subitems, subset_size, pos_item_size, neg_item_size = self.sampler.sample(self.vocab,wordset,self.negative_sample_size)
 
@@ -281,6 +287,7 @@ class Dataloader(object):
         self.l = len(self.data)//batch_size if len(self.data)%batch_size == 0 else len(self.data)//batch_size + 1
         self.batch_size = batch_size
         self.word2id = word2id
+
     def __len__(self):
         return self.l
 
@@ -305,10 +312,11 @@ class Dataloader(object):
                 yield batch_old_word_set_, old_mask, batch_new_word_set_, new_mask, batch_label
                 batch_old_word_set, batch_new_word_set, batch_label = [],[],[]
     
-    
+    # Error method
     def split(self, q:float=0.2) -> Tuple[Any]:
         dataitem = copy(self.data)
-        random.shuffle(dataitem)
+        ixs = list(range(0,len(self.data)))
+        random.shuffle(ixs)
         sub_l = int(self.l * q)
         return [
                 Dataloader(dataitem[:sub_l], self.word2id, self.batch_size),

@@ -14,6 +14,7 @@ from config import TrainingConfig,OperateConfig,DataConfig,ModelConfig
 from log import logger
 
 def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, modelconfig:Dict):
+    
     dir_path =  dataconfig['data_dir_path']
 
     if not dir_path:
@@ -30,6 +31,11 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
                     sampler = select_sampler(dataconfig['sample_strategy']),
                     negative_sample_size = dataconfig['test_negative_sample_size']
                 )
+    dev_datasetitem = DataItemSet(
+                    dataset=datasetdir.dev_dataset,
+                    sampler = select_sampler(dataconfig['sample_strategy']),
+                    negative_sample_size = dataconfig['test_negative_sample_size']
+                )
 
     train_dataloader = Dataloader(
                     dataitems=train_datasetitem, 
@@ -38,6 +44,11 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
                 )
     test_dataloader = Dataloader(
                     dataitems=test_datasetitem,
+                    word2id=datasetdir.word2id,
+                    batch_size=trainingconfig['batch_size']
+                )
+    dev_dataloader = Dataloader(
+                    dataitems=dev_datasetitem,
                     word2id=datasetdir.word2id,
                     batch_size=trainingconfig['batch_size']
                 )
@@ -64,15 +75,16 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         # continue to trainning
 
     if operateconfig['train']:
-        wrapper.train(train_dataloader=train_dataloader)
+        wrapper.train(train_dataloader=train_dataloader,dev_dataloader=dev_dataloader)
 
     if operateconfig['test']:
         wrapper.test(test_dataloader=test_dataloader)
 
     if operateconfig['predict']:
         func_list = select_evaluate_func(operateconfig['eval_function'])
+
         pred_word_set = wrapper.cluster_predict(
-                    dataset=datasetdir.train_dataset,
+                    dataset=datasetdir.test_dataset,
                     word2id=datasetdir.word2id,
                     outputfile=trainingconfig['result_out_dir'].joinpath(datasetdir.name+'_result.txt')
                 )
