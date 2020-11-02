@@ -13,7 +13,7 @@ import config
 from config import TrainingConfig,OperateConfig,DataConfig,ModelConfig
 from log import logger
 
-def test_clustertask(operateconfig:Dict[Any],dataconfig:Dict[Any], trainingconfig:Dict[Any], modelconfig:Dict[Any]):
+def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, modelconfig:Dict):
     dir_path =  dataconfig['data_dir_path']
 
     if not dir_path:
