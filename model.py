@@ -86,10 +86,10 @@ class Scorer(nn.Module):
         self.post_transformer = nn.Sequential(
             nn.Linear(self.embed_trans_hidden_size,self.post_trans_hidden_size),
             nn.ReLU(),
-            nn.Linear(self.post_trans_hidden_size,self.post_trans_hidden_size / 2),
+            nn.Linear(self.post_trans_hidden_size,self.post_trans_hidden_size // 2),
             nn.Dropout(dropout),
             nn.ReLU(),
-            nn.Linear(self.post_trans_hidden_size / 2, 1)
+            nn.Linear(self.post_trans_hidden_size // 2, 1)
         )
     
     def forward(self, input_ids, mask):
