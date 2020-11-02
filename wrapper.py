@@ -10,7 +10,7 @@ from utils import set_padding
 import torch
 import torch.nn as nn
 from torch import optim
-from typing import Any, Callable, Dict, None, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 import numpy as np
 from dataloader import DataSet, Dataloader, test_dataloader
 from pathlib import Path
@@ -46,7 +46,7 @@ class ModelWrapper(object):
         self.best_score = 0
         self.checkpoint_dir =trainingconfig['checkpoint_dir']
 
-        self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.lr, amsgrad=True)
+        self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.init_lr, amsgrad=True)
         # optimizer is default 
 
     def train(self, train_dataloader:Dataloader, dev_dataloader:Optional[Dataloader] = None) -> None:
