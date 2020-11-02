@@ -278,7 +278,7 @@ class Dataloader(object):
     """Dataloader to get batch size dataitem"""
     def __init__(self, dataitems:DataItemSet, word2id, batch_size:int) -> None:
         self.data = dataitems
-        self.l = len(self.data)/batch_size if len(self.data)%batch_size == 0 else len(self.data)/batch_size + 1
+        self.l = len(self.data)//batch_size if len(self.data)%batch_size == 0 else len(self.data)/batch_size + 1
         self.batch_size = batch_size
         self.word2id = word2id
     def __len__(self):
