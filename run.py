@@ -94,7 +94,6 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
             logger.info("{} : {:.2f}".format(name,f))
 
 
-
 def NYT():
     DataConfig['data_dir_path'] = config.NYT_DIR_PATH
     test_clustertask(OperateConfig,DataConfig,TrainingConfig,ModelConfig)
