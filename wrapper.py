@@ -91,7 +91,7 @@ class ModelWrapper(object):
                 cur_loss.backward()
                 self.optimizer.step()
                 # cal metrics
-                pred_labels = np.where(pred_labels.cpu().numpy()>self.threshold, 1, 0)
+                pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
                 unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
                 summary_metrics += unit
                 # log  
@@ -137,7 +137,7 @@ class ModelWrapper(object):
             cur_loss = self.loss_fn(pred_labels,labels_tensor) / labels_tensor.shape[0]
             val_loss += cur_loss
             #metrics
-            pred_labels = np.where(pred_labels.cpu().numpy()>self.threshold, 1, 0)
+            pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
             logger.info("Test: step / all_step : {} / {}".format(step,all_step))
@@ -169,7 +169,7 @@ class ModelWrapper(object):
                 F(i) for i in [word_set, mask, new_word_set, mask_]
             ]
             pred_labels = self.best_model(word_set_tensor, mask, new_word_set_tensor, mask_)
-            pred_labels = np.where(pred_labels.cpu().numpy()>self.threshold, 1, 0)
+            pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             # cal metrics
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
