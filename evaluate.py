@@ -239,22 +239,34 @@ def helper_trans_to_labelsequence(cluster:Dict[Any])->Sequence[Any]:
         label_sequence.append(cluster[element])
     return label_sequence
 
-def metrics_adjusted_randn_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> float:
+def metrics_adjusted_randn_index(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> Any:
     pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
     target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return sklearn.metrics.adjusted_rand_index(label_true = target_sequence, label_pred = pred_sequence)
+    return 'ARI', sklearn.metrics.adjusted_rand_index(label_true = target_sequence, label_pred = pred_sequence)
 
-def metrics_normalized_mutual_info_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> float:
+def metrics_normalized_mutual_info_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) -> Any:
     pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
     target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return sklearn.metrics.normalized_mutual_info_score(label_true = target_sequence, label_pred = pred_sequence)
+    return 'NMI', sklearn.metrics.normalized_mutual_info_score(label_true = target_sequence, label_pred = pred_sequence)
 
-def metrics_fowlkes_mallows_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) ->float:
+def metrics_fowlkes_mallows_score(pred_cluster:Dict[Any], target_cluster:Dict[Any]) ->Any:
     pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
     target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return sklearn.metrics.fowlkes_mallows_score(label_true = target_sequence, label_pred = pred_sequence)
+    return 'FMI', sklearn.metrics.fowlkes_mallows_score(label_true = target_sequence, label_pred = pred_sequence)
 
-
+#through config to add function list
+def select_evaluate_func(select:Sequence[str]) -> Any:
+    func_list = []
+    for i in select:
+        if i == 'ARI':
+            func_list.append(metrics_adjusted_randn_index)
+        elif i == 'NMI':
+            func_list.append(metrics_normalized_mutual_info_score)
+        elif i == 'FMI':
+            func_list.append(metrics_fowlkes_mallows_score)
+        else:
+            raise KeyError
+    return func_list
 
 if __name__ == '__main__':
     print(1)

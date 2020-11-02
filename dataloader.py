@@ -202,8 +202,10 @@ class Sample_vary_size_enumerate(DataItemSampler):
 def select_sampler(name:str)-> DataItemSampler:
     if name == "sample_vary_size_enumerate":
         return Sample_vary_size_enumerate()
-    else:
+    elif name == "sample_size_repeat_size":
         return Sample_size_repeat_size()
+    else:
+        raise KeyError
 
 class DataItemSet(object):
     """DataItemSet  Generate Training and Testing data item"""

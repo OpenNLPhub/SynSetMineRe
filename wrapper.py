@@ -12,7 +12,6 @@ import torch.nn as nn
 from torch import optim
 from typing import Any, Callable, Dict, None, Optional, Sequence
 import numpy as np
-from torch.utils import data
 from dataloader import DataSet, Dataloader, test_dataloader
 from pathlib import Path
 from log import logger
@@ -33,7 +32,8 @@ class ModelWrapper(object):
         # assert len(hidden_size) == 2
         # scorer = Scorer(embedding_layer,hidden_size[0],hidden_size[1])
         self.model = model
-        self.loss_fn = trainingconfig['loss_fn']
+        self.loss_fn = nn.BCELoss()
+
         self.start_epoches = 0
         self.threshold = trainingconfig['threshold']
         self.epoches = trainingconfig['epoch']
@@ -79,7 +79,7 @@ class ModelWrapper(object):
                 word_set, mask, new_word_set, mask_, labels = item
                 F = lambda x: torch.Tensor(x).long().to(self.device)
                 word_set_tensor, mask, new_word_set_tensor, mask_ = [
-                    i for i in [word_set, mask, new_word_set, mask_]
+                    F(i) for i in [word_set, mask, new_word_set, mask_]
                 ]
                 pred_labels = self.model(word_set_tensor, mask, new_word_set_tensor, mask_)
                 #batch_size * 1 : vector
@@ -106,7 +106,8 @@ class ModelWrapper(object):
             self.validate(dev_dataloader_)
 
             #save checkpoint
-            if epoch + 1 == self.start_epoches + self.checkpoint_epoches:
+            if (epoch + 1 == self.start_epoches + self.checkpoint_epoches or 
+                epoch + 1 == self.epoches):
                 #update best_model
                 self.save_check_point()
                 self.start_epoches = epoch
@@ -124,11 +125,12 @@ class ModelWrapper(object):
         self.model.eval()
         val_loss = 0
         summary_metrics = EvalUnit(name='Validation')
+        all_step = len(dev_dataloader)
         for step,item in dev_dataloader:
             word_set, mask, new_word_set, mask_, labels = item
             F = lambda x: torch.Tensor(x).long().to(self.device)
             word_set_tensor, mask, new_word_set_tensor, mask_ = [
-                i for i in [word_set, mask, new_word_set, mask_]
+                F(i) for i in [word_set, mask, new_word_set, mask_]
             ]
             pred_labels = self.model(word_set_tensor, mask, new_word_set_tensor, mask_)
             labels_tensor = torch.Tensor(labels).float().to(self.device)
@@ -138,6 +140,7 @@ class ModelWrapper(object):
             pred_labels = np.where(pred_labels.cpu().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
+            logger.info("Test: step / all_step : {} / {}".format(step,all_step))
 
         #log
         desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss)
@@ -149,7 +152,7 @@ class ModelWrapper(object):
             self.best_score = summary_metrics.f1_score
             self.best_model = deepcopy(self.model)
             logger.info('Successfully Update Best Model')
-        
+   
     def test(self, test_dataloader:Dataloader) -> None:
         """Implementation to Batch test the model using developed dataset
         Args:
@@ -163,13 +166,14 @@ class ModelWrapper(object):
             word_set, mask, new_word_set, mask_, labels = item 
             F = lambda x: torch.Tensor(x).long().to(self.device)
             word_set_tensor, mask, new_word_set_tensor, mask_ = [
-                i for i in [word_set, mask, new_word_set, mask_]
+                F(i) for i in [word_set, mask, new_word_set, mask_]
             ]
             pred_labels = self.best_model(word_set_tensor, mask, new_word_set_tensor, mask_)
             pred_labels = np.where(pred_labels.cpu().numpy()>self.threshold, 1, 0)
             # cal metrics
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
+            logger.info("Test: step / all_step : {} / {}".format(step,all_step))
 
         logger.info("In Test DataSet")
         logger.info(summary_metrics)
@@ -224,7 +228,7 @@ class ModelWrapper(object):
         }
         torch.save(d, filepath)
     
-    def cluster_predict(self, dataset:DataSet, word2id:Dict, outputfile:Optional[str]) -> Sequence[Any]:
+    def cluster_predict(self, dataset:DataSet, word2id:Dict, outputfile:Optional[Path]) -> Sequence[Any]:
         """Using Model to cluster wordset
         Args:
             dataset: it's self defined class, in DataSet, we use vocab to get all words and true cluster result
@@ -249,7 +253,7 @@ class ModelWrapper(object):
             #batch_size * max_word_set_size
             F = lambda x: torch.Tensor(x).long().to(self.device)
             word_set_tensor, mask, new_word_set_tensor, mask_ = [
-                i for i in [old_wordset, mask, new_wordset, mask_]
+                F(i) for i in [old_wordset, mask, new_wordset, mask_]
             ]
             scores = self.best_model(word_set_tensor, mask, new_word_set_tensor, mask_)
             index = torch.argmax(scores).item()
