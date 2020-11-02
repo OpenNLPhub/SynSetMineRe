@@ -23,12 +23,12 @@ pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
 
 class DataSetDir(object):
     """ class: DataSet Dir including training data and dev data """
-    def __init__(self,dir_file_path:Path,dir_structure:Optional[Dict] == None, word_emb_select:Optional[str] = None):
+    def __init__(self,dir_file_path:Path,dir_structure:Optional[Dict] = None, word_emb_select:Optional[str] = None):
         self.path = dir_file_path
         self.name = dir_file_path.name
         self.train_file_name = 'train-cold.set'
         self.test_file_name = 'test.set'
-        if not dir_structure:
+        if dir_structure:
             self.train_file_name = dir_structure['train']
             self.test_file_name = dir_structure['test']
         
@@ -45,15 +45,11 @@ class DataSetDir(object):
         
         self.train_dataset = DataSet(
                                 dir_file_path.joinpath(self.train_file_name),
-                                self.name+"_training",
-                                self.word2id,
-                                self.embedding_vec,
+                                self.name+"_training"
                             )
         self.test_dataset = DataSet(
                                 dir_file_path.joinpath(self.test_file_name),
-                                self.name+"_testing",
-                                self.word2id,
-                                self.embedding_vec,
+                                self.name+"_testing"
                             )
 
     def _read_embed_info(self,filepath:str):
