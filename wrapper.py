@@ -6,6 +6,8 @@
 @desc [description]
 '''
 from datetime import datetime
+
+from numpy.core.defchararray import index
 from utils import set_padding
 import torch
 import torch.nn as nn
@@ -92,6 +94,9 @@ class ModelWrapper(object):
                 self.optimizer.step()
                 # cal metrics
                 pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
+                # logger.info('{}'.format(step))
+                # if step == 20:
+                #     import pdb;pdb.set_trace()
                 unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
                 summary_metrics += unit
                 # log  

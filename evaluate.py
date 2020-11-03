@@ -76,7 +76,7 @@ class EvalUnit(object):
 
 def binary_confusion_matrix_evaluate(y_true:Sequence[Any], y_pred:Sequence[Any]) -> EvalUnit:
     # import pdb; pdb.set_trace()
-    tn, fp, fn, tp =  confusion_matrix(y_true,y_pred).ravel()
+    tn, fp, fn, tp =  confusion_matrix(y_true,y_pred,labels = [0,1]).ravel()
     return EvalUnit(tn,fp,fn,tp)
 
 
