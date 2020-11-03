@@ -18,7 +18,7 @@ Wiki_DIR_PATH = Path.joinpath(cwd, 'data', 'Wiki')
 TrainingConfig ={
     'loss_fn' : 'crossEntropy',
     'threshold' :  0.5,
-    'epoch' : 30,
+    'epoch' : 500,
     'checkpoint_epoch' : 5,
     'print_step' : 15,
     'lr' : 1e-4,
@@ -32,7 +32,8 @@ OperateConfig = {
     'resume': False,
     'train' : True,
     'test' : True,
-    'predict' : True
+    'predict' : True,
+    'eval_function':['ARI','NMI','FMI']
 }
 
 #default dataconfig
@@ -49,6 +50,6 @@ ModelConfig = {
     'version' : 'v1.0.0',
     'embed_trans_hidden_size' : 250,
     'post_trans_hidden_size' : 500,
-    'dropout' : 0.1
+    'dropout' : 0.3
 }
 
