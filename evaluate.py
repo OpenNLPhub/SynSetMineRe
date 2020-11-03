@@ -61,7 +61,7 @@ class EvalUnit(object):
 
     def f1_score(self) -> float:
         r = self.recall()
-        p = self.precision
+        p = self.precision()
         return 2 * r * p / (p + r) if p + r != 0  else 0.
 
     def precision(self) -> float:
