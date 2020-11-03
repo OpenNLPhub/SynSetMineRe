@@ -32,7 +32,7 @@ class EvalUnit(object):
         self.tn = tn
 
     def __repr__(self):
-        desc = '--------- Desc EvalUnit {}---------'.format(self.name)
+        desc = '\n--------- Desc EvalUnit {}---------\n'.format(self.name)
         desc += 'True Positive:{} \nTrue Negative:{} \nFalse Positive:{} \nFalse Negative:{} \n'.format(
                 self.tp, self.tn, self.fp, self.fn
                 )

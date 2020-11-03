@@ -101,7 +101,7 @@ class ModelWrapper(object):
                 summary_metrics += unit
                 # log  
                 if (step+1) % self.print_step == 0 or step + 1 == all_step:
-                    desc = 'Epoch:{} {} / {} Loss:{}'.format(epoch,step+1,all_step,cur_loss.item())
+                    desc = 'Epoch:{} {} / {} Loss:{}'.format(epoch+1,step+1,all_step,cur_loss.item())
                     logger.info(desc)
             #log metrics
             logger.info("In Training Set, Metrics:")
@@ -145,7 +145,7 @@ class ModelWrapper(object):
             pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
-            logger.info("Test: step / all_step : {} / {}".format(step+1,all_step))
+            logger.info("Validation: step / all_step : {} / {}".format(step+1,all_step))
 
         #log
         desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss)
@@ -154,7 +154,7 @@ class ModelWrapper(object):
 
         if summary_metrics.f1_score() > self.best_score:
             self.best_loss = val_loss
-            self.best_score = summary_metrics.f1_score
+            self.best_score = summary_metrics.f1_score()
             self.best_model = deepcopy(self.model)
             logger.info('Successfully Update Best Model')
    

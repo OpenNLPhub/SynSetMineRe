@@ -81,7 +81,7 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         wrapper.test(test_dataloader=test_dataloader)
 
     if operateconfig['predict']:
-        func_list = select_evaluate_func(operateconfig['eval_function'])
+        # func_list = select_evaluate_func(operateconfig['eval_function'])
 
         pred_word_set = wrapper.cluster_predict(
                     dataset=datasetdir.test_dataset,
