@@ -61,7 +61,7 @@ class EvalUnit(object):
 
     def f1_score(self) -> float:
         r = self.recall()
-        p = self.precesion
+        p = self.precision
         return 2 * r * p / (p + r) if p + r != 0  else 0.
 
     def precision(self) -> float:
@@ -76,7 +76,7 @@ class EvalUnit(object):
 
 def binary_confusion_matrix_evaluate(y_true:Sequence[Any], y_pred:Sequence[Any]) -> EvalUnit:
     # import pdb; pdb.set_trace()
-    tn ,fp, fn, tp =  confusion_matrix(y_true,y_pred).ravel()
+    tn, fp, fn, tp =  confusion_matrix(y_true,y_pred).ravel()
     return EvalUnit(tn,fp,fn,tp)
 
 
