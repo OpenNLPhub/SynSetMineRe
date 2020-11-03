@@ -101,7 +101,7 @@ class ModelWrapper(object):
                 summary_metrics += unit
                 # log  
                 if (step+1) % self.print_step == 0 or step + 1 == all_step:
-                    desc = 'Epoch:{} {} / {} Loss:{}'.format(epoch,step,all_step,cur_loss.item())
+                    desc = 'Epoch:{} {} / {} Loss:{}'.format(epoch,step+1,all_step,cur_loss.item())
                     logger.info(desc)
             #log metrics
             logger.info("In Training Set, Metrics:")
@@ -131,7 +131,7 @@ class ModelWrapper(object):
         val_loss = 0
         summary_metrics = EvalUnit(name='Validation')
         all_step = len(dev_dataloader)
-        for step,item in dev_dataloader:
+        for step,item in enumerate(dev_dataloader):
             word_set, mask, new_word_set, mask_, labels = item
             F = lambda x: torch.Tensor(x).long().to(self.device)
             word_set_tensor, mask, new_word_set_tensor, mask_ = [
@@ -145,14 +145,14 @@ class ModelWrapper(object):
             pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
-            logger.info("Test: step / all_step : {} / {}".format(step,all_step))
+            logger.info("Test: step / all_step : {} / {}".format(step+1,all_step))
 
         #log
         desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss)
         logger.info(desc)
         logger.info(summary_metrics)
 
-        if summary_metrics.f1_score > self.best_score:
+        if summary_metrics.f1_score() > self.best_score:
             self.best_loss = val_loss
             self.best_score = summary_metrics.f1_score
             self.best_model = deepcopy(self.model)
@@ -178,7 +178,7 @@ class ModelWrapper(object):
             # cal metrics
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
-            logger.info("Test: step / all_step : {} / {}".format(step,all_step))
+            logger.info("Test: step / all_step : {} / {}".format(step+1,all_step))
 
         logger.info("In Test DataSet")
         logger.info(summary_metrics)
