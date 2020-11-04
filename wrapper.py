@@ -157,7 +157,8 @@ class ModelWrapper(object):
             pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
-            logger.info("Validation: step / all_step : {} / {}, loss:{}".format(step+1,all_step,cur_loss.item()))
+            if (step+1) % self.print_step == 0 or step + 1 == all_step:
+                logger.info("Validation: step / all_step : {} / {}, loss:{}".format(step+1,all_step,cur_loss.item()))
 
         #log
         desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss / all_step)
