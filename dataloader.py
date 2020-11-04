@@ -67,10 +67,10 @@ class DataSetDir(object):
         word2id['PAD'] = 0
         word2id['UNK'] = 1
         embed_matrix = [[0]*dim_size,[0]*dim_size]
-        for line in lines[1:]:
+        for idx,line in enumerate(lines[1:]):
             t = line.strip().split(' ')
             word, _ = t[0].split('||')
-            word2id[word] = len(word2id)
+            word2id[word] = 2+idx
             nums = [ eval(i) for i in t[1:]]
             embed_matrix.append(nums)
         
