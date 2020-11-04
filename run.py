@@ -12,7 +12,8 @@ from evaluate import select_evaluate_func
 import config 
 from config import TrainingConfig,OperateConfig,DataConfig,ModelConfig
 from log import logger
-
+from utils import set_random_seed
+SEED = 2020
 def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, modelconfig:Dict):
     
     dir_path =  dataconfig['data_dir_path']
@@ -81,13 +82,14 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         wrapper.test(test_dataloader=test_dataloader)
 
     if operateconfig['predict']:
-        # func_list = select_evaluate_func(operateconfig['eval_function'])
-
+        func_list = select_evaluate_func(operateconfig['eval_function'])
+        # import pdb;pdb.set_trace()
         pred_word_set = wrapper.cluster_predict(
-                    dataset=datasetdir.test_dataset,
+                    dataset=datasetdir.train_dataset,
                     word2id=datasetdir.word2id,
                     outputfile=trainingconfig['result_out_dir'].joinpath(datasetdir.name+'_result.txt')
                 )
+        # import pdb;pdb.set_trace()
         ans = wrapper.evaluate(datasetdir.train_dataset, pred_word_set,function_list=func_list)
         logger.info("{} DataSet Cluster Prediction".format(datasetdir.train_dataset.name))
         for name,f in ans:
@@ -98,7 +100,15 @@ def NYT():
     DataConfig['data_dir_path'] = config.NYT_DIR_PATH
     test_clustertask(OperateConfig,DataConfig,TrainingConfig,ModelConfig)
 
+def PubMed():
+    DataConfig['data_dir_path'] = config.PubMed_DIR_PATH
+    test_clustertask(OperateConfig,DataConfig,TrainingConfig,ModelConfig)
+
+def Wiki():
+    DataConfig['data_dir_path'] = config.Wiki_DIR_PATH
+    test_clustertask(OperateConfig,DataConfig,TrainingConfig,ModelConfig)
 if __name__ == '__main__':
+    set_random_seed(seed=SEED)
     NYT()
     
     

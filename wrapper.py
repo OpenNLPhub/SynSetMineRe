@@ -6,12 +6,14 @@
 @desc [description]
 '''
 from datetime import datetime
+import enum
 
 from numpy.core.defchararray import index
 from utils import set_padding
 import torch
 import torch.nn as nn
 from torch import optim
+from torch.utils.tensorboard import SummaryWriter
 from typing import Any, Callable, Dict, Optional, Sequence
 import numpy as np
 from dataloader import DataSet, Dataloader, test_dataloader
@@ -60,6 +62,8 @@ class ModelWrapper(object):
         Returns:
             None
         """
+        writer = SummaryWriter()
+
         all_step = len(train_dataloader)
         t = range(self.start_epoches, self.epoches)
 
@@ -107,8 +111,11 @@ class ModelWrapper(object):
             logger.info("In Training Set, Metrics:")
             logger.info(summary_metrics)
 
+            #plot
+            # writer.add_scalar('Loss/Train',)
+
             #validate
-            self.validate(dev_dataloader_)
+            val_loss = self.validate(dev_dataloader_)
 
             #save checkpoint
             if (epoch + 1 == self.start_epoches + self.checkpoint_epoches or 
@@ -118,11 +125,16 @@ class ModelWrapper(object):
                 self.start_epoches = epoch
                 logger.info('Successfully Store Checkpoint in epoch {}'.format(epoch+1))
 
-            val_loss_list.append(val_loss_list)
-            ep_loss_list.append(ep_loss)
+            val_loss_list.append(val_loss)
+            ep_loss_list.append(ep_loss / all_step)
         # tensorboard plot
+        writer = SummaryWriter()
+        for i,loss in enumerate(ep_loss_list):
+            writer.add_scalar('Loss/Train', loss, i)
+        for i, loss in enumerate(val_loss_list):
+            writer.add_scalar('Loss/Validation', loss, i)
 
-    def validate(self,dev_dataloader:Dataloader) -> None:
+    def validate(self,dev_dataloader:Dataloader) -> Any:
         """Implementation to Batch validate the model using developed dataset
         Args:
             dev_dataloader : development dataset iteration used to validate model
@@ -140,15 +152,15 @@ class ModelWrapper(object):
             pred_labels = self.model(word_set_tensor, mask, new_word_set_tensor, mask_)
             labels_tensor = torch.Tensor(labels).float().to(self.device)
             cur_loss = self.loss_fn(pred_labels,labels_tensor) / labels_tensor.shape[0]
-            val_loss += cur_loss
+            val_loss += cur_loss.item()
             #metrics
             pred_labels = np.where(pred_labels.cpu().detach().numpy()>self.threshold, 1, 0)
             unit = binary_confusion_matrix_evaluate(np.array(labels),pred_labels)
             summary_metrics += unit
-            logger.info("Validation: step / all_step : {} / {}".format(step+1,all_step))
+            logger.info("Validation: step / all_step : {} / {}, loss:{}".format(step+1,all_step,cur_loss.item()))
 
         #log
-        desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss)
+        desc = 'In Validation, Average Loss:{:.2f}'.format(val_loss / all_step)
         logger.info(desc)
         logger.info(summary_metrics)
 
@@ -157,6 +169,8 @@ class ModelWrapper(object):
             self.best_score = summary_metrics.f1_score()
             self.best_model = deepcopy(self.model)
             logger.info('Successfully Update Best Model')
+        
+        return val_loss / all_step
    
     def test(self, test_dataloader:Dataloader) -> None:
         """Implementation to Batch test the model using developed dataset
@@ -203,7 +217,8 @@ class ModelWrapper(object):
         checkpoint = torch.load(filepath)
         self.best_loss = checkpoint['best_loss']
         self.start_epoches = checkpoint['epoch']
-        self.model.load_state_dict(checkpoint['state_dict']).to(self.device)
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.model.to(self.device)
         self.best_model.load_state_dict(checkpoint['best_model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.best_score = checkpoint['best_score']
@@ -246,12 +261,14 @@ class ModelWrapper(object):
         vocab = dataset.vocab
         words = vocab.keys()
         wordset_list = []
+        # import pdb;pdb.set_trace()
         for word in words:
             wordid = word2id[word]
             if not wordset_list:
                 # Empty
                 wordset_list.append([wordid])
-            new_wordset = [ i.append(wordid) for i in wordset_list]
+                continue
+            new_wordset = [[*i, wordid] for i in wordset_list]
             old_wordset = deepcopy(wordset_list)
             old_wordset, mask = set_padding(old_wordset)
             new_wordset, mask_ = set_padding(new_wordset)
@@ -266,7 +283,10 @@ class ModelWrapper(object):
 
             if best_scores > self.threshold:
                 wordset_list[index].append(wordid)
+            else:
+                wordset_list.append([wordid])
         #id2word
+        # import pdb;pdb.set_trace()
         id2word = { j:i for i,j in word2id.items()}
         F = lambda x:[ id2word[i] for i in x]
         pred_word_sets = [ F(wordset) for wordset in wordset_list]
@@ -287,15 +307,17 @@ class ModelWrapper(object):
             pred_word_set: the output of cluster_predict method | List of word sets
             function_list: the list of evaluating function which have two input pred_cluster and target_cluster
         """
+
         #trans datatype 
         clusters = set(dataset.vocab.values())
         cluster2id = {cluster:idx for idx,cluster in enumerate(clusters)}
         target_cluster = {key:cluster2id[value] for key,value in dataset.vocab.items()}
         pred_cluster = {}
-        for idx,pred_word_set  in enumerate(pred_word_sets):
+        # import pdb;pdb.set_trace()
+        for idx,pred_word_set in enumerate(pred_word_sets):
             for word in pred_word_set:
                 pred_cluster[word] = idx
-        
+        # import pdb;pdb.set_trace()
         ans = []
         for func in function_list:
             ans.append(func(pred_cluster = pred_cluster,target_cluster = target_cluster))
