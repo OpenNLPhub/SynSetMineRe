@@ -229,27 +229,26 @@ I changed the input data type slightly
 
 
 '''helper function'''
-def helper_trans_to_labelsequence(cluster:Dict)->Sequence[Any]:
+def helper_trans_to_labelsequence(cluster:Dict,cluster_:Dict)-> Any:
     keys = cluster.keys()
     label_sequence = []
+    label_sequence_ = []
     for element in keys:
         label_sequence.append(cluster[element])
-    return label_sequence
+        label_sequence_.append(cluster_[element])
+    return np.array(label_sequence), np.array(label_sequence_)
 
 def metrics_adjusted_randn_index(pred_cluster:Dict, target_cluster:Dict) -> Any:
-    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
-    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return 'ARI', sklearn.metrics.adjusted_rand_index(label_true = target_sequence, label_pred = pred_sequence)
+    pred_sequence,target_sequence = helper_trans_to_labelsequence(pred_cluster,target_cluster)
+    return 'ARI', sklearn.metrics.adjusted_rand_score(labels_true = target_sequence, labels_pred = pred_sequence)
 
 def metrics_normalized_mutual_info_score(pred_cluster:Dict, target_cluster:Dict) -> Any:
-    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
-    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return 'NMI', sklearn.metrics.normalized_mutual_info_score(label_true = target_sequence, label_pred = pred_sequence)
+    pred_sequence,target_sequence = helper_trans_to_labelsequence(pred_cluster,target_cluster)
+    return 'NMI', sklearn.metrics.normalized_mutual_info_score(labels_true = target_sequence, labels_pred = pred_sequence)
 
 def metrics_fowlkes_mallows_score(pred_cluster:Dict, target_cluster:Dict) ->Any:
-    pred_sequence = np.array(helper_trans_to_labelsequence(pred_cluster))
-    target_sequence = np.array(helper_trans_to_labelsequence(target_cluster))
-    return 'FMI', sklearn.metrics.fowlkes_mallows_score(label_true = target_sequence, label_pred = pred_sequence)
+    pred_sequence,target_sequence = helper_trans_to_labelsequence(pred_cluster,target_cluster)
+    return 'FMI', sklearn.metrics.fowlkes_mallows_score(labels_true = target_sequence, labels_pred = pred_sequence)
 
 #through config to add function list
 def select_evaluate_func(select:Sequence[str]) -> Any:
