@@ -28,7 +28,7 @@ class ModelWrapper(object):
     """
     def __init__(self, model:nn.Module, trainingconfig:Dict) -> None:
         super(ModelWrapper,self).__init__()
-        self.device = torch.device("cuda:1") if torch.cuda.is_available() else torch.device('cpu')
+        self.device = torch.device(trainingconfig['cuda']) if torch.cuda.is_available() else torch.device('cpu')
         
         # embedding_layer = Embedding_layer.load(modelconfig['word2vec_path'])
         # embedding_layer.freeze_parameters()
@@ -214,7 +214,7 @@ class ModelWrapper(object):
             filepath = Path.joinpath(dir_path,max(flist))
         else:
             filepath = Path.joinpath(dir_path,file_name)
-        checkpoint = torch.load(filepath)
+        checkpoint = torch.load(filepath, map_location='cpu')
         self.best_loss = checkpoint['best_loss']
         self.start_epoches = checkpoint['epoch']
         self.model.load_state_dict(checkpoint['state_dict'])
