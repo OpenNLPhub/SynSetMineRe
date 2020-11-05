@@ -24,20 +24,20 @@ Classifier Result in NYT DataSet
 
 |                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
 | -------------- | ----------- | ------------ | ---- | ---- | ---- | ---- |
-| True Positive  | 152 | 78 |      |      |  638  |206|
-| True Negative  | 2493 | 1147 |      |      |  8616   |2532|
-| False Positive | 47 | 23 |      |      |   94  |28|
-| False Negative | 102 | 39 |      |      |   233   |50|
-| Sum | 2794 | 1288 |      |      | 9581 |2816|
+| True Positive  | 152 | 78 | 4306 | 228 |  638  |206|
+| True Negative  | 2493 | 1147 | 56702 | 2481 |  8616   |2532|
+| False Positive | 47 | 23 | 498 | 19 |   94  |28|
+| False Negative | 102 | 39 | 1414 | 22 |   233   |50|
+| Sum | 2794 | 1288 | 62920 | 2750 | 9581 |2816|
 
 
 
 |                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev |Wiki_Test|
 | -------------- | ----------- | ------------ | ---- | ---- | ---- | ---- |
-| Accuracy | 0.95 | 0.95 |      |      | 0.97 |0.97|
-| Precision | 0.76 | 0.77 |      |      | 0.87 |0.88|
-| Recall | 0.60 | 0.67 |      |      | 0.73 |0.80|
-| F1-Score | 0.67 | 0.72 |      |      | 0.80 |0.84|
+| Accuracy | 0.95 | 0.95 | 0.97 | 0.99 | 0.97 |0.97|
+| Precision | 0.76 | 0.77 | 0.90 | 0.92 | 0.87 |0.88|
+| Recall | 0.60 | 0.67 | 0.75 | 0.91 | 0.73 |0.80|
+| F1-Score | 0.67 | 0.72 | 0.82 | 0.92 | 0.80 |0.84|
 
 
 
