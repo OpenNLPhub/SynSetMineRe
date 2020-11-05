@@ -49,7 +49,7 @@ class ModelWrapper(object):
         self.best_loss = 1e10
         self.best_score = 0
         self.checkpoint_dir =trainingconfig['checkpoint_dir']
-
+        self.batch_size = trainingconfig['batch_size']
         self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.init_lr, amsgrad=True)
         # optimizer is default 
 
@@ -165,7 +165,7 @@ class ModelWrapper(object):
         logger.info(desc)
         logger.info(summary_metrics)
 
-        if summary_metrics.f1_score() > self.best_score:
+        if summary_metrics.f1_score() >= self.best_score:
             self.best_loss = val_loss
             self.best_score = summary_metrics.f1_score()
             self.best_model = deepcopy(self.model)
@@ -271,18 +271,27 @@ class ModelWrapper(object):
                 continue
             new_wordset = [[*i, wordid] for i in wordset_list]
             old_wordset = deepcopy(wordset_list)
-            old_wordset, mask = set_padding(old_wordset)
-            new_wordset, mask_ = set_padding(new_wordset)
-            #batch_size * max_word_set_size
-            F = lambda x: torch.Tensor(x).long().to(self.device)
-            word_set_tensor, mask, new_word_set_tensor, mask_ = [
-                F(i) for i in [old_wordset, mask, new_wordset, mask_]
-            ]
-            scores = self.best_model(word_set_tensor, mask, new_word_set_tensor, mask_)
-            index = torch.argmax(scores).item()
-            best_scores = torch.max(scores).item()
+            itemsnum = len(new_wordset)
+            # add batch operation
+            tmp_best_scores = 0
+            index = 0
+            for ix in range(0,itemsnum,self.batch_size):
+                batch_new_wordset = new_wordset[ix:ix+self.batch_size]
+                batch_old_wordset = old_wordset[ix:ix+self.batch_size]
+                batch_old_wordset, mask = set_padding(batch_old_wordset)
+                batch_new_wordset, mask_ = set_padding(batch_new_wordset)
+                #batch_size * max_word_set_size
+                F = lambda x: torch.Tensor(x).long().to(self.device)
+                word_set_tensor, mask, new_word_set_tensor, mask_ = [
+                    F(i) for i in [batch_old_wordset, mask, batch_new_wordset, mask_]
+                ]
+                scores = self.best_model(word_set_tensor, mask, new_word_set_tensor, mask_)
+                best_scores = torch.max(scores).item()
+                if best_scores >= tmp_best_scores:
+                    tmp_best_scores = best_scores
+                    index = ix + torch.argmax(scores).item()
 
-            if best_scores > self.threshold:
+            if tmp_best_scores > self.threshold:
                 wordset_list[index].append(wordid)
             else:
                 wordset_list.append([wordid])
