@@ -22,38 +22,6 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         raise KeyError
 
     datasetdir = DataSetDir(dir_path)
-    train_datasetitem = DataItemSet(
-                    dataset=datasetdir.train_dataset,
-                    sampler = select_sampler(dataconfig['sample_strategy']),
-                    negative_sample_size = dataconfig['negative_sample_size']
-                ) 
-    test_datasetitem = DataItemSet(
-                    dataset=datasetdir.test_dataset,
-                    sampler = select_sampler(dataconfig['sample_strategy']),
-                    negative_sample_size = dataconfig['test_negative_sample_size']
-                )
-    dev_datasetitem = DataItemSet(
-                    dataset=datasetdir.dev_dataset,
-                    sampler = select_sampler(dataconfig['sample_strategy']),
-                    negative_sample_size = dataconfig['test_negative_sample_size']
-                )
-
-    train_dataloader = Dataloader(
-                    dataitems=train_datasetitem, 
-                    word2id=datasetdir.word2id,
-                    batch_size=trainingconfig['batch_size']
-                )
-    test_dataloader = Dataloader(
-                    dataitems=test_datasetitem,
-                    word2id=datasetdir.word2id,
-                    batch_size=trainingconfig['batch_size']
-                )
-    dev_dataloader = Dataloader(
-                    dataitems=dev_datasetitem,
-                    word2id=datasetdir.word2id,
-                    batch_size=trainingconfig['batch_size']
-                )
-
     # combine model
     embedding_layer = Embedding_layer.from_pretrained(datasetdir.embedding_vec)
     embedding_layer.freeze_parameters()
@@ -76,9 +44,42 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         # continue to trainning
 
     if operateconfig['train']:
+        train_datasetitem = DataItemSet(
+                    dataset=datasetdir.train_dataset,
+                    sampler = select_sampler(dataconfig['sample_strategy']),
+                    negative_sample_size = dataconfig['negative_sample_size']
+                ) 
+        dev_datasetitem = DataItemSet(
+                    dataset=datasetdir.dev_dataset,
+                    sampler = select_sampler(dataconfig['sample_strategy']),
+                    negative_sample_size = dataconfig['test_negative_sample_size']
+                )
+        train_dataloader = Dataloader(
+                    dataitems=train_datasetitem, 
+                    word2id=datasetdir.word2id,
+                    batch_size=trainingconfig['batch_size']
+                )
+        dev_dataloader = Dataloader(
+                    dataitems=dev_datasetitem,
+                    word2id=datasetdir.word2id,
+                    batch_size=trainingconfig['batch_size']
+                )
         wrapper.train(train_dataloader=train_dataloader,dev_dataloader=dev_dataloader)
 
     if operateconfig['test']:
+        test_datasetitem = DataItemSet(
+                    dataset=datasetdir.test_dataset,
+                    sampler = select_sampler(dataconfig['sample_strategy']),
+                    negative_sample_size = dataconfig['test_negative_sample_size']
+                )
+
+
+
+        test_dataloader = Dataloader(
+                    dataitems=test_datasetitem,
+                    word2id=datasetdir.word2id,
+                    batch_size=trainingconfig['batch_size']
+                )
         wrapper.test(test_dataloader=test_dataloader)
 
     if operateconfig['predict']:
@@ -107,9 +108,12 @@ def PubMed():
 def Wiki():
     DataConfig['data_dir_path'] = config.Wiki_DIR_PATH
     test_clustertask(OperateConfig,DataConfig,TrainingConfig,ModelConfig)
+
 if __name__ == '__main__':
     set_random_seed(seed=SEED)
     NYT()
+    PubMed()
+    Wiki()
     
     
     
