@@ -120,16 +120,8 @@ class DataSet(object):
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         for line in lines:
-            # it = re.finditer(pattern, line)
-            # item = []
-            # size = 0.
-            # for i in it:
-            #     size += 1
-            #     word, cluster = line[i.start():i.end()].split("||")
-            #     vocab[word] = cluster
-            #     item.append(word)
-            s = line.split('{')[1][:-2]
-            words = [eval(i) for i in s.split(',')]
+            pos = line.find(' ')
+            words = eval(line[pos+1:])
             size = len(words)
             item = []
             for i in words:
