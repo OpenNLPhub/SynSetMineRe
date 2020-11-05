@@ -16,7 +16,7 @@ from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from typing import Any, Callable, Dict, Optional, Sequence
 import numpy as np
-from dataloader import DataSet, Dataloader, test_dataloader
+from dataloader import DataSet, Dataloader
 from pathlib import Path
 from log import logger
 from copy import deepcopy
@@ -133,7 +133,8 @@ class ModelWrapper(object):
             writer.add_scalar('Loss/Train', loss, i)
         for i, loss in enumerate(val_loss_list):
             writer.add_scalar('Loss/Validation', loss, i)
-
+        writer.close()
+        
     def validate(self,dev_dataloader:Dataloader) -> Any:
         """Implementation to Batch validate the model using developed dataset
         Args:
