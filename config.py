@@ -18,20 +18,21 @@ Wiki_DIR_PATH = Path.joinpath(cwd, 'data', 'Wiki')
 TrainingConfig ={
     'loss_fn' : 'crossEntropy',
     'threshold' :  0.5,
-    'epoch' : 500,
+    'epoch' : 100,
     'checkpoint_epoch' : 5,
     'print_step' : 15,
     'lr' : 1e-4,
     'checkpoint_dir' : cwd.joinpath('checkpoint'),
     'batch_size' : 32,
-    'result_out_dir' : cwd.joinpath('result')
+    'result_out_dir' : cwd.joinpath('result'),
+    'cuda': 'cuda:0'
 }
 
 #default Operate Config
 OperateConfig = {
-    'resume': False,
+    'resume': True,
     'train' : True,
-    'test' : True,
+    'test' : False,
     'predict' : True,
     'eval_function':['ARI','NMI','FMI']
 }

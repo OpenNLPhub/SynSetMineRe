@@ -86,12 +86,12 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
         func_list = select_evaluate_func(operateconfig['eval_function'])
         # import pdb;pdb.set_trace()
         pred_word_set = wrapper.cluster_predict(
-                    dataset=datasetdir.train_dataset,
+                    dataset=datasetdir.test_dataset,
                     word2id=datasetdir.word2id,
                     outputfile=trainingconfig['result_out_dir'].joinpath(datasetdir.name+'_result.txt')
                 )
         # import pdb;pdb.set_trace()
-        ans = wrapper.evaluate(datasetdir.train_dataset, pred_word_set,function_list=func_list)
+        ans = wrapper.evaluate(datasetdir.test_dataset, pred_word_set,function_list=func_list)
         logger.info("{} DataSet Cluster Prediction".format(datasetdir.train_dataset.name))
         for name,f in ans:
             logger.info("{} : {:.2f}".format(name,f))
