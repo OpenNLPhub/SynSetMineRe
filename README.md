@@ -35,9 +35,9 @@ Classifier Result in NYT DataSet
 |                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev |Wiki_Test|
 | -------------- | ----------- | ------------ | ---- | ---- | ---- | ---- |
 | Accuracy | 0.95 | 0.95 | 0.97 | 0.99 | 0.97 |0.97|
-| Precision | 0.76 | 0.77 | 0.90 | 0.92 | 0.87 |0.88|
-| Recall | 0.60 | 0.67 | 0.75 | 0.91 | 0.73 |0.80|
-| F1-Score | 0.67 | 0.72 | 0.82 | 0.92 | 0.80 |0.84|
+| Precision | 0.76 | 0.77 | 0.90 | 0.92 | 0.85 |0.88|
+| Recall | 0.60 | 0.67 | 0.75 | 0.91 | 0.77 |0.80|
+| F1-Score | 0.67 | 0.72 | 0.82 | 0.92 | 0.81 |0.84|
 
 
 
@@ -45,7 +45,24 @@ clustering result
 
 |      | NYT_Train |    NYT_Test  | PubMed_Train |PubMed_Test | Wiki_Train| Wiki_Test |
 | ---- | --------- | ---- | ---- | ---- | ----|-----|
-| ARI | 0.16 |      | | |0.06| |
-| NMI | 0.87 |      | | |0.83| |
-| FMI | 0.23 |      | | |0.12||
+| ARI | 0.16 | **0.33** | ------ | **0.69** |0.06| **0.40** |
+| NMI | 0.87 | **0.85** | ------ | **0.93** |0.83| **0.88** |
+| FMI | 0.23 | **0.34** | ------       | **0.70** |0.12|**0.43**|
 
+(PubMed_Train is too big to predict, So I did not do this experiment)
+
+
+
+Orignal Experiment Result in Paper
+
+|      |      NYT_Test |       PubMed_Test |       Wiki_Test |
+| ---- | -------- | ----------- | ---- |
+| ARI  |       0.4491 (+0.0216)       | 0.7433 (+0.0066) |      0.5643 (+0.0131)      |
+| NMI  |       0.9062 (+0.0153)       | 0.9490 (+0.0097) |      0.9304 (+0.0023)      |
+| FMI  |       0.4637(+0.0192)       | 0.7445 (+0.0064) |      0.5710 (+0.0117)      |
+
+
+
+## Result
+
+In PubMed DataSet, I reimplement the best performance. Althought, there is a distinguish between it and result in raw paper. Compared with other method's result showed in paper, Reimplemented SysSetMine still performed better.
