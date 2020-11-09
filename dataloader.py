@@ -331,55 +331,9 @@ class Dataloader(object):
 
 
 
-'''------------------------------ Test ---------------------------------- '''
-
-def test_dataset():
-    from pathlib import Path
-    pwd = Path.cwd()
-    NYT_dir_path = Path.joinpath(pwd,'data','NYT')
-    print(NYT_dir_path)
-    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
-    print(train_data_NYT)
-    Med_dir_path = Path.joinpath(pwd,'data','PubMed')
-    train_data_MedPub = DataSet(Path.joinpath(Med_dir_path,'train-cold.set'),'PubMed-Train')
-    print(train_data_MedPub)
-
-    Wiki_dir_path = Path.joinpath(pwd,'data','Wiki')
-    train_data_Wiki = DataSet(Path.joinpath(Wiki_dir_path,'train-cold.set'),'Wiki-Train')
-    print(train_data_Wiki)
-
-def test_dataitemset():
-    from pathlib import Path
-    pwd = Path.cwd()
-    NYT_dir_path = Path.joinpath(pwd,'data','NYT')
-    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
-    sampler = Sample_size_repeat_size()
-    negative_sample_size = 10
-    dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
-    print(dataitem)
-    # for i in dataitem:
-    #     pass
-
-def test_dataloader():
-    from pathlib import Path
-    pwd = Path.cwd()
-    NYT_dir_path = Path.joinpath(pwd,'data','NYT')
-    train_data_NYT = DataSet(Path.joinpath(NYT_dir_path,'train-cold.set'),'NYT-Train')
-    sampler = Sample_size_repeat_size()
-    negative_sample_size = 10
-    dataitem = DataItemSet(train_data_NYT, sampler, negative_sample_size)
-    batch_size = 32
-
-    word2id = train_data_NYT.word2id
-    dataloader = Dataloader(dataitems= dataitem, word2id= word2id, batch_size= batch_size)
-    
-    for item in dataloader:
-        batch_old_word_set, old_mask, batch_new_word_set, new_mask, batch_label = item
-        import pdb;pdb.set_trace()
-    
 
 if __name__ == '__main__':
-    test_dataset()
+    pass
     # test_dataitemset()
     # test_dataloader()
 
