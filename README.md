@@ -66,3 +66,21 @@ Orignal Experiment Result in Paper
 ## Result
 
 In PubMed DataSet, I reimplement the best performance. Althought, there is a distinguish between it and result in raw paper. Compared with other method's result showed in paper, Reimplemented SysSetMine still performed better.
+
+
+
+
+
+
+
+
+
+## Extention and Explore
+
+I try to replace the scorer using BertModel. Omit the position_ids in bert input, using a special token to split words in one word set.
+
+
+
+#### Embedding Problem
+
+Many Words is [UNK] word in Bert Pretrained Model.  I try to use a classifier to map word embedding layer to bert embedding size
