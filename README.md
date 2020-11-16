@@ -63,6 +63,16 @@ Orignal Experiment Result in Paper
 
 
 
+## Experiment Detail
+
+- I freeze the embedding layer. Only use raw word embedding to train.
+
+- Only Use Combined.embed word vector to do experiment. Other Experiment is suspended. QAQ
+
+  
+
+
+
 ## Result
 
 In PubMed DataSet, I reimplement the best performance. Althought, there is a distinguish between it and result in raw paper. Compared with other method's result showed in paper, Reimplemented SysSetMine still performed better.
