@@ -36,7 +36,7 @@ class DataSetDir(object):
             self.dev_file_name = dir_structure['dev']
         
         word_emb_file = None
-        if word_emb_select == None:
+        if word_emb_select == None or word_emb_select:
             word_emb_file = dir_file_path.joinpath('combined.embed')
         elif word_emb_select == 'fastText-subword':
             word_emb_file = dir_file_path.joinpath('combined.fastText-with-subword.embed')

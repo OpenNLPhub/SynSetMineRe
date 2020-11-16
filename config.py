@@ -42,7 +42,8 @@ DataConfig = {
     'data_dir_path' : None,
     'sample_strategy' : 'sample_size_repeat_size',
     'negative_sample_size' : 20,
-    'test_negative_sample_size' : 10
+    'test_negative_sample_size' : 10,
+    'word_emb_select': 'combined.embed'
 }
 
 #default modelconfig

@@ -21,7 +21,7 @@ def test_clustertask(operateconfig:Dict,dataconfig:Dict, trainingconfig:Dict, mo
     if not dir_path:
         raise KeyError
 
-    datasetdir = DataSetDir(dir_path)
+    datasetdir = DataSetDir(dir_path,word_emb_select=dataconfig['word_emb_select'])
     # combine model
     embedding_layer = Embedding_layer.from_pretrained(datasetdir.embedding_vec)
     embedding_layer.freeze_parameters()
