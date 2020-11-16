@@ -16,6 +16,42 @@ Reimplemtation of SynSetMine proposed in Mining Entity Synonyms with Efficient N
 
 
 
+**Distribution of Dataset**
+
+Note:  split 1/5 train-cold.set  as dev.set
+
+**NYT**
+
+| Counts    | 1                     | 2 | 3 | 4 | 5 | 6 |
+| --------- | ------------------------------------- | ---- | ---- | ---- | ---- |---- |
+| train_set | 18 | 1213 | 35 | 6 | 1 |0|
+| test_set  | 0    | 1 | 89 | 18 | 7 |2|
+| dev_set   | 0         | 227 | 20 | 6 | 1 |0|
+
+
+
+**PubMed**
+
+
+| Counts    | 1    | 2    | 3    | 4    | 5    | 6    | >6|
+| --------- | ---- | ---- | ---- | ---- | ---- | ---- |  ---- |
+| train_set | 0   | 19135 | 5688   | 187    | 954   | 2437   | 199    |
+| test_set  | 0    | 0    | 0   | 0  | 0   | 128    | 122    |
+| dev_set   | 0    | 2009  | 1556   |   1163  | 655    | 154    | 183    |
+
+
+
+**Wiki**
+
+
+| Counts    | 1    | 2    | 3    | 4    | 5    | 6    | >6|
+| --------- | ---- | ---- | ---- | ---- | ---- | ---- |  ---- |
+| train_set | 100   | 4243 | 12   | 6    | 1    | 0    | 0    |
+| test_set  | 0    | 0    | 176   | 53   | 16    | 8    | 3    |
+| dev_set   | 4    | 8555  | 12   | 6    | 1    | 0    | 0    |
+
+
+
 ## Experiment Result
 
 （I use 20 negative sample ratio to create negative samples）
