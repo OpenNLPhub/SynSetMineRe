@@ -30,9 +30,9 @@ TrainingConfig ={
 
 #default Operate Config
 OperateConfig = {
-    'resume': True,
+    'resume': False,
     'train' : True,
-    'test' : False,
+    'test' : True,
     'predict' : True,
     'eval_function':['ARI','NMI','FMI']
 }
