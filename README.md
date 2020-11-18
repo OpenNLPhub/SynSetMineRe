@@ -20,6 +20,8 @@ Reimplemtation of SynSetMine proposed in Mining Entity Synonyms with Efficient N
 
 Note:  split 1/5 train-cold.set  as dev.set
 
+counts is the wordset size
+
 **NYT**
 
 | Counts    | 1                     | 2 | 3 | 4 | 5 | 6 |
@@ -56,6 +58,20 @@ Note:  split 1/5 train-cold.set  as dev.set
 
 （I use 20 negative sample ratio to create negative samples）
 
+Orignal Experiment Result in Paper
+
+|      | NYT_Test         | PubMed_Test      | Wiki_Test        |
+| ---- | ---------------- | ---------------- | ---------------- |
+| ARI  | 0.4491 (+0.0216) | 0.7433 (+0.0066) | 0.5643 (+0.0131) |
+| NMI  | 0.9062 (+0.0153) | 0.9490 (+0.0097) | 0.9304 (+0.0023) |
+| FMI  | 0.4637(+0.0192)  | 0.7445 (+0.0064) | 0.5710 (+0.0117) |
+
+
+
+---
+
+**split train-cold.set file into 1:4: dev_data and train_data**
+
 Classifier Result in NYT DataSet
 
 |                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
@@ -89,13 +105,40 @@ clustering result
 
 
 
-Orignal Experiment Result in Paper
+---
 
-|      |      NYT_Test |       PubMed_Test |       Wiki_Test |
-| ---- | -------- | ----------- | ---- |
-| ARI  |       0.4491 (+0.0216)       | 0.7433 (+0.0066) |      0.5643 (+0.0131)      |
-| NMI  |       0.9062 (+0.0153)       | 0.9490 (+0.0097) |      0.9304 (+0.0023)      |
-| FMI  |       0.4637(+0.0192)       | 0.7445 (+0.0064) |      0.5710 (+0.0117)      |
+**split train-cold.set file into 1:4: dev_data is 1/5 of train-cold.set and train_data is train-cold.set**
+
+Classifier Result in NYT DataSet
+
+|                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
+| -------------- | ------- | -------- | ---------- | ----------- | -------- | --------- |
+| True Positive  | 152     | 78       | 5128       | 230         | 638      | 206       |
+| True Negative  | 2493    | 1147     | 56721      | 2491        | 8616     | 2532      |
+| False Positive | 47      | 23       | 479        | 9           | 94       | 28        |
+| False Negative | 102     | 39       | 592        | 20          | 233      | 50        |
+| Sum            | 2794    | 1288     | 62920      | 2750        | 9581     | 2816      |
+
+
+
+|           | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
+| --------- | ------- | -------- | ---------- | ----------- | -------- | --------- |
+| Accuracy  | 0.95    | 0.95     | 0.98       | 0.99        | 0.97     | 0.97      |
+| Precision | 0.76    | 0.77     | 0.91       | 0.96        | 0.85     | 0.88      |
+| Recall    | 0.60    | 0.67     | 0.90       | 0.92        | 0.77     | 0.80      |
+| F1-Score  | 0.67    | 0.72     | 0.91       | 0.94        | 0.81     | 0.84      |
+
+
+
+clustering result
+
+|      | NYT_Train | NYT_Test | PubMed_Train | PubMed_Test | Wiki_Train | Wiki_Test |
+| ---- | --------- | -------- | ------------ | ----------- | ---------- | --------- |
+| ARI  | 0.16      | **0.33** | ------       | **0.71**    | 0.06       | **0.40**  |
+| NMI  | 0.87      | **0.85** | ------       | **0.93**    | 0.83       | **0.88**  |
+| FMI  | 0.23      | **0.34** | ------       | **0.71**    | 0.12       | **0.43**  |
+
+(PubMed_Train is too big to predict, So I did not do this experiment)
 
 
 
@@ -106,8 +149,6 @@ Orignal Experiment Result in Paper
 - Only Use Combined.embed word vector to do experiment. Other Experiment is suspended. QAQ
 
   
-
-
 
 ## Result
 
