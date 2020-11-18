@@ -113,20 +113,20 @@ Classifier Result in NYT DataSet
 
 |                | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
 | -------------- | ------- | -------- | ---------- | ----------- | -------- | --------- |
-| True Positive  | 152     | 78       | 5128       | 230         | 638      | 206       |
-| True Negative  | 2493    | 1147     | 56721      | 2491        | 8616     | 2532      |
-| False Positive | 47      | 23       | 479        | 9           | 94       | 28        |
-| False Negative | 102     | 39       | 592        | 20          | 233      | 50        |
+| True Positive  | 1237    | 55       | 5128       | 230         | 867      | 190       |
+| True Negative  | 25455   | 1154     | 56721      | 2491        | 8624     | 2541      |
+| False Positive | 5       | 16       | 479        | 9           | 86       | 19        |
+| False Negative | 36      | 62       | 592        | 20          | 4        | 66        |
 | Sum            | 2794    | 1288     | 62920      | 2750        | 9581     | 2816      |
 
 
 
 |           | NYT_Dev | NYT_Test | PubMed_Dev | PubMed_Test | Wiki_Dev | Wiki_Test |
 | --------- | ------- | -------- | ---------- | ----------- | -------- | --------- |
-| Accuracy  | 0.95    | 0.95     | 0.98       | 0.99        | 0.97     | 0.97      |
-| Precision | 0.76    | 0.77     | 0.91       | 0.96        | 0.85     | 0.88      |
-| Recall    | 0.60    | 0.67     | 0.90       | 0.92        | 0.77     | 0.80      |
-| F1-Score  | 0.67    | 0.72     | 0.91       | 0.94        | 0.81     | 0.84      |
+| Accuracy  | 0.98    | 0.94     | 0.98       | 0.99        | 0.99     | 0.97      |
+| Precision | 0.85    | 0.77     | 0.91       | 0.96        | 0.91     | 0.91      |
+| Recall    | 0.92    | 0.47     | 0.90       | 0.92        | 1.00     | 0.74      |
+| F1-Score  | 0.89    | 0.59     | 0.91       | 0.94        | 0.95     | 0.82      |
 
 
 
@@ -134,9 +134,9 @@ clustering result
 
 |      | NYT_Train | NYT_Test | PubMed_Train | PubMed_Test | Wiki_Train | Wiki_Test |
 | ---- | --------- | -------- | ------------ | ----------- | ---------- | --------- |
-| ARI  | 0.16      | **0.33** | ------       | **0.71**    | 0.06       | **0.40**  |
-| NMI  | 0.87      | **0.85** | ------       | **0.93**    | 0.83       | **0.88**  |
-| FMI  | 0.23      | **0.34** | ------       | **0.71**    | 0.12       | **0.43**  |
+| ARI  | -----     | **0.42** | ------       | **0.71**    | ------     | **0.45**  |
+| NMI  | -----     | **0.89** | ------       | **0.93**    | ------     | **0.90**  |
+| FMI  | -----     | **0.42** | ------       | **0.71**    | ------     | **0.46**  |
 
 (PubMed_Train is too big to predict, So I did not do this experiment)
 
@@ -153,8 +153,6 @@ clustering result
 ## Result
 
 In PubMed DataSet, I reimplement the best performance. Althought, there is a distinguish between it and result in raw paper. Compared with other method's result showed in paper, Reimplemented SysSetMine still performed better.
-
-
 
 
 
