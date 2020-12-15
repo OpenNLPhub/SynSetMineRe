@@ -9,16 +9,12 @@
 
 from pathlib import Path
 import random
-import re
-from re import sub
 from typing import Dict, List, Optional, Set, Tuple, Any
 from copy import copy
 import numpy as np
-from numpy.core.defchararray import index
-from torch.utils import data
 from utils import set_padding
 import pickle
-
+import config
 pattern = "(?<=\')[^\|\']*\|\|[^\|\']*?(?=\')"
 
 
@@ -36,7 +32,7 @@ class DataSetDir(object):
             self.dev_file_name = dir_structure['dev']
         
         word_emb_file = None
-        if word_emb_select == None or word_emb_select:
+        if word_emb_select == None or word_emb_select == 'combined.embed':
             word_emb_file = dir_file_path.joinpath('combined.embed')
         elif word_emb_select == 'fastText-subword':
             word_emb_file = dir_file_path.joinpath('combined.fastText-with-subword.embed')
@@ -57,6 +53,7 @@ class DataSetDir(object):
                                 dir_file_path.joinpath(self.dev_file_name),
                                 self.name+"_dev"
                             )
+            
     def _read_embed_info(self,filepath:str):
         """Read word embeding file"""
         with open(filepath, 'r', encoding = 'utf-8') as f:
@@ -68,8 +65,12 @@ class DataSetDir(object):
         word2id['UNK'] = 1
         embed_matrix = [[0]*dim_size,[0]*dim_size]
         for idx,line in enumerate(lines[1:]):
-            t = line.strip().split(' ')
-            word, _ = t[0].split('||')
+            t = line.strip()
+#             print(t)
+            word, t = t.split('||')
+#             print(word)
+#             print(t)
+            t = t.split(' ')
             word2id[word] = 2+idx
             nums = [ eval(i) for i in t[1:]]
             embed_matrix.append(nums)
@@ -323,17 +324,25 @@ class Dataloader(object):
                 Dataloader(dataitem[sub_l:], self.word2id, self.batch_size)
             ]
         
+    
 
 
-
-
-
-
-
-
+def test_CSKB():
+    datasetdir = DataSetDir(config.CSKB_DIR_PATH)
+    train_datasetitem = DataItemSet(
+                    dataset=datasetdir.train_dataset,
+                    sampler = select_sampler(config.dataconfig['sample_strategy']),
+                    negative_sample_size = config.dataconfig['negative_sample_size']
+                )
+    train_dataloader = Dataloader(
+                    dataitems=train_datasetitem, 
+                    word2id=datasetdir.word2id,
+                    batch_size=config.trainingconfig['batch_size']
+                )
 
 if __name__ == '__main__':
-    pass
+    import pdb;pdb.set_trace()
+    test_CSKB()
     # test_dataitemset()
     # test_dataloader()
 
